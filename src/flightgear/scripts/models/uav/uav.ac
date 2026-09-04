@@ -1,0 +1,7 @@
+AC3Db
+MATERIAL "White" rgb 1 1 1  amb 1 1 1  emis 0 0 0  spec 0 0 0  shi 0  trans 0
+OBJECT poly
+name "Minimal"
+kids 0
+numvert 0
+numsurf 0

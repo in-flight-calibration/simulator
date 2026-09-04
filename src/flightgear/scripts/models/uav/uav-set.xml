@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<PropertyList>
+    <sim>
+        <description>Fixed-wing UAV</description>
+        <model>
+            <path>uav.ac</path>
+        </model>
+
+        <view n="0">
+            <name>Camera</name>
+            <type>lookfrom</type>
+            <internal type="bool">true</internal>
+            <config>
+                <from-model type="bool">true</from-model>
+                <from-model-idx type="int">0</from-model-idx>
+                <x-offset-m type="double">0.0</x-offset-m>
+                <y-offset-m type="double">0.0</y-offset-m>
+                <z-offset-m type="double">0.0</z-offset-m>
+                <pitch-offset-deg type="double">0.0</pitch-offset-deg>
+                <ground-level-nearplane-m type="double">0.5f</ground-level-nearplane-m>
+                <allow-user-manipulation type="bool">false</allow-user-manipulation>
+            </config>
+        </view>
+    </sim>
+</PropertyList>

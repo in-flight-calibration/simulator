@@ -1,0 +1,23 @@
+# ROS 2 / colcon
+build/
+install/
+log/
+
+# ROS 2 generated Python cache
+__pycache__/
+*.pyc
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# IDEs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+**/resources/fgfs.AppImage
