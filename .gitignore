@@ -20,4 +20,4 @@ Makefile
 # OS files
 .DS_Store
 
-**/resources/fgfs.AppImage
+*.log

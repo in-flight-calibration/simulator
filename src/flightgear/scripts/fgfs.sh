@@ -2,8 +2,10 @@
 
 RESOLUTION="1280x720"
 FOV="75"
+FPS="30"
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PORT_CONTROL=5500
+PORT_VIDEO=5501
 
 FGFS_PID_FILE="/tmp/fgfs.pid"
 STREAM_PID_FILE="/tmp/fgfs_stream.pid"
@@ -36,23 +38,22 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 fgfs \
-    --fg-aircraft="$SCRIPT_DIR/models" \
+    --log-level=info \
+    --airport=EPBC --runway=28L \
+    --generic=socket,in,30,,5500,udp,control \
+    --fdm=null \
     --aircraft=uav \
     --timeofday=noon \
-    --airport=EPBC \
-    --runway=28L \
-    --altitude=500 \
     --enable-terrasync \
-    --disable-sound \
-    --disable-random-objects \
-    --prop:/sim/gui/menubar=false \
     --geometry="$RESOLUTION" \
     --fov="$FOV" \
+    --max-fps=$FPS \
+    --prop:/sim/gui/menubar=false \
     --prop:/sim/gui/menubar/autohide=true \
     --prop:/sim/traffic-manager/enabled=0 \
-    --fdm=null \
-    --max-fps=30 \
-    > /dev/null 2>&1 &
+    --disable-sound \
+    --disable-random-objects \
+    > fg.log 2>&1 &
 
 FLIGHTGEAR_PID=$!
 
@@ -91,7 +92,7 @@ gst-launch-1.0 -q \
         qp-max=30 ! \
     rtph264pay ! \
     udpsink host=127.0.0.1 \
-        port=5004 \
+        port="$PORT_VIDEO" \
         sync=false \
         async=false \
     > /dev/null 2>&1 &
