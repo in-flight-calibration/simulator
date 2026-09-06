@@ -8,7 +8,10 @@ PORT_CONTROL=5500
 PORT_VIDEO=5501
 
 FGFS_PID_FILE="/tmp/fgfs.pid"
-STREAM_PID_FILE="/tmp/fgfs_stream.pid"
+STREAM_PID_FILE="/tmp/gst.pid"
+
+FGFS_LOG_FILE="/tmp/fgfs.log"
+STREAM_LOG_FILE="/tmp/gst.log"
 
 FLIGHTGEAR_PID=""
 GSTREAMER_PID=""
@@ -53,7 +56,7 @@ fgfs \
     --prop:/sim/traffic-manager/enabled=0 \
     --disable-sound \
     --disable-random-objects \
-    > fg.log 2>&1 &
+    > "$FGFS_LOG_FILE" 2>&1 &
 
 FLIGHTGEAR_PID=$!
 
@@ -95,7 +98,7 @@ gst-launch-1.0 -q \
         port="$PORT_VIDEO" \
         sync=false \
         async=false \
-    > /dev/null 2>&1 &
+    > "$STREAM_LOG_FILE" 2>&1 &
 
 GSTREAMER_PID=$!
 

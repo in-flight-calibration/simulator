@@ -24,6 +24,7 @@ find_package(tf2_ros REQUIRED)
 add_executable(flightgear 
     src/main.cpp
     src/flightgear_control_node.cpp
+    src/process.cpp
     src/video_node.cpp
 )
 
@@ -43,6 +44,10 @@ target_link_libraries(flightgear
     tf2::tf2
     tf2_ros::tf2_ros
     ${OpenCV_LIBS}
+)
+
+target_compile_definitions(flightgear PRIVATE
+  SCRIPTS_DIR="${CMAKE_SOURCE_DIR}/scripts"
 )
 
 install(TARGETS
