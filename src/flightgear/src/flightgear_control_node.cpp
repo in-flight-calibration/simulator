@@ -8,31 +8,23 @@
 #include <cmath>
 #include <stdexcept>
 
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/LinearMath/Quaternion.hpp>
 #include <tf2/LinearMath/Matrix3x3.hpp>
 
 FlightgearControlNode::FlightgearControlNode(
-    const std::string& position_topic,
-    const std::string& orientation_topic,
+    const std::string& groundtruth_topic,
     std::uint16_t port,
     std::chrono::microseconds interval)
     : Node("flightgear_control_node"), _port{port}, _interval{interval}
 {
-    _position_sub =
-        create_subscription<geographic_msgs::msg::GeoPoint>(
-            position_topic,
+    _groundtruth_sub =
+        create_subscription<aircraft_msgs::msg::Groundtruth>(
+            groundtruth_topic,
             rclcpp::SensorDataQoS(),
             std::bind(
-                &FlightgearControlNode::positionCallback,
-                this,
-                std::placeholders::_1));
-
-    _orientation_sub =
-        create_subscription<geometry_msgs::msg::Quaternion>(
-            orientation_topic,
-            rclcpp::SensorDataQoS(),
-            std::bind(
-                &FlightgearControlNode::orientationCallback,
+                &FlightgearControlNode::groundtruthCallback,
                 this,
                 std::placeholders::_1));
 }
@@ -55,10 +47,9 @@ void FlightgearControlNode::run()
 
     RCLCPP_INFO(
         get_logger(),
-        "Flightgear Control Node started: UDP port=%u, position topic=%s, orientation topic=%s",
-        static_cast<unsigned>(_port),
-        "/flightgear/position",
-        "/flightgear/orientation");
+        "Flightgear Control Node started: UDP port=%u",
+        static_cast<unsigned>(_port)
+    );
 }
 
 bool FlightgearControlNode::openSocket()
@@ -94,49 +85,22 @@ bool FlightgearControlNode::closeSocket()
     return false;
 }
 
-void FlightgearControlNode::positionCallback(
-    const geographic_msgs::msg::GeoPoint::SharedPtr msg)
+void FlightgearControlNode::groundtruthCallback(
+    const aircraft_msgs::msg::Groundtruth::SharedPtr msg)
 {
-    // RCLCPP_INFO(
-    //     get_logger(),
-    //     "Position callback received"
-    // );
-
     _packet.latitude = msg->latitude;
     _packet.longitude = msg->longitude;
     _packet.altitude_ft = msg->altitude * M_TO_FT;
-    _packet_updated = true;
-}
-
-void FlightgearControlNode::orientationCallback(
-    const geometry_msgs::msg::Quaternion::SharedPtr msg)
-{
-    // RCLCPP_INFO(
-    //     get_logger(),
-    //     "Orientation callback received"
-    // );
-
-    const tf2::Quaternion q(
-        msg->x,
-        msg->y,
-        msg->z,
-        msg->w);
-
+    
+    tf2::Quaternion q;
     double roll, pitch, yaw;
+    tf2::fromMsg(msg->orientation, q);
     tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
     _packet.roll_deg = roll * RAD_TO_DEG;
     _packet.pitch_deg = pitch * RAD_TO_DEG;
     _packet.heading_deg = yaw * RAD_TO_DEG;
     _packet_updated = true;
-
-    RCLCPP_INFO(
-        get_logger(),
-        "Orientation updated: roll=%.2f, pitch=%.2f, heading=%.2f",
-        _packet.roll_deg,
-        _packet.pitch_deg,
-        _packet.heading_deg
-    );
 }
 
 void FlightgearControlNode::timerCallback()
@@ -144,11 +108,6 @@ void FlightgearControlNode::timerCallback()
     if (_socket < 0 || !_packet_updated) {
         return;
     }
-
-    RCLCPP_INFO(
-        get_logger(),
-        "Sending packet to Flightgear"
-    );
 
     ::sendto(
         _socket,

@@ -1,8 +1,7 @@
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
-#include <geographic_msgs/msg/geo_point.hpp>
-#include <geometry_msgs/msg/quaternion.hpp>
+#include <aircraft_msgs/msg/groundtruth.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -13,8 +12,7 @@ class FlightgearControlNode : public rclcpp::Node
 {
 public:
     FlightgearControlNode(
-        const std::string& position_topic,
-        const std::string& orientation_topic,
+        const std::string& groundtruth_topic,
         std::uint16_t port,
         std::chrono::microseconds interval);
 
@@ -29,11 +27,8 @@ private:
     int _socket{-1};
     sockaddr_in _destination{};
 
-    rclcpp::Subscription<geographic_msgs::msg::GeoPoint>::SharedPtr
-        _position_sub;
-
-    rclcpp::Subscription<geometry_msgs::msg::Quaternion>::SharedPtr
-        _orientation_sub;
+    rclcpp::Subscription<aircraft_msgs::msg::Groundtruth>::SharedPtr
+        _groundtruth_sub;
 
     rclcpp::TimerBase::SharedPtr _timer;
 
@@ -52,10 +47,8 @@ private:
     bool openSocket();
     bool closeSocket();
 
-    void positionCallback(
-        const geographic_msgs::msg::GeoPoint::SharedPtr msg);
-    void orientationCallback(
-        const geometry_msgs::msg::Quaternion::SharedPtr msg);
+    void groundtruthCallback(
+        const aircraft_msgs::msg::Groundtruth::SharedPtr msg);
     void timerCallback();
 
     static constexpr double M_TO_FT = 3.28083989501312;

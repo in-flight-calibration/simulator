@@ -12,8 +12,7 @@ int main(int argc, char * argv[])
     process.run({SCRIPTS_DIR "/fgfs.sh"});
 
     auto flightgear_control_node = std::make_shared<FlightgearControlNode>(
-        "/flightgear/position",
-        "/flightgear/orientation",
+        "/dynamics/groundtruth",
         5500,
         std::chrono::milliseconds(66)
     );
