@@ -21,3 +21,8 @@ Makefile
 .DS_Store
 
 *.log
+
+# Plotjuggler
+PlotJuggler/
+plotjuggler_msgs/
+plotjuggler-ros-plugins/

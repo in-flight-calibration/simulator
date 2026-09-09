@@ -14,6 +14,9 @@ geometry_msgs/Vector3 linear_velocity
 # Angular velocity in body frame [rad/s].
 geometry_msgs/Vector3 angular_velocity
 
+# Linear acceleration in body frame [m/s^2]
+geometry_msgs/Vector3 linear_acceleration
+
 # Air-relative velocity in body frame [m/s].
 geometry_msgs/Vector3 airspeed
 

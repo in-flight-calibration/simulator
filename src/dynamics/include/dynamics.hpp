@@ -56,6 +56,8 @@ private:
     Solver _solver;
     std::mutex _mutex;
 
+    RigidBodyState _rigid_body_state;
+
     rclcpp::Subscription<aircraft_msgs::msg::Control>::SharedPtr
         _control_sub;
 
@@ -95,33 +97,37 @@ private:
 
     void timerCallback() {
         double time;
-        RigidBodyState rigid_body_state;
+        RigidBodyState next_rigid_body_state;
+
         Eigen::Vector3d airspeed;
 
         {
             std::lock_guard<std::mutex> lock(_mutex);
             _solver.step(_interval);
             time = _solver.getTime();
-            rigid_body_state = _aircraft.getState();
+            next_rigid_body_state = _aircraft.getState();
             airspeed = _aircraft.getAirspeed();
         }
 
-        const auto sec = static_cast<int32_t>(time);
-        const auto nanosec =
-            static_cast<uint32_t>((time - sec) * 1e9);
+        Eigen::Vector3d prev_velocity_ned = _rigid_body_state.orientation * _rigid_body_state.velocity;
+        _rigid_body_state = next_rigid_body_state;
+        Eigen::Vector3d velocity_ned = _rigid_body_state.orientation * _rigid_body_state.velocity;
+        Eigen::Vector3d acceleration_ned = (velocity_ned - prev_velocity_ned) / _interval;
+        Eigen::Vector3d acceleration_body = _rigid_body_state.orientation.conjugate() * acceleration_ned;
+
+
 
         aircraft_msgs::msg::Groundtruth groundtruth_msg;
 
-        groundtruth_msg.header.stamp.sec        = sec;
-        groundtruth_msg.header.stamp.nanosec    = nanosec;
-
-        groundtruth_msg.position            = tf2::toMsg(rigid_body_state.position);
-        groundtruth_msg.orientation         = tf2::toMsg(rigid_body_state.orientation);
-        groundtruth_msg.linear_velocity     = toMsg<geometry_msgs::msg::Vector3>(rigid_body_state.velocity);
-        groundtruth_msg.angular_velocity    = toMsg<geometry_msgs::msg::Vector3>(rigid_body_state.rates);
+        groundtruth_msg.header.stamp = this->now();
+        groundtruth_msg.position            = tf2::toMsg(_rigid_body_state.position);
+        groundtruth_msg.orientation         = tf2::toMsg(_rigid_body_state.orientation);
+        groundtruth_msg.linear_velocity     = toMsg<geometry_msgs::msg::Vector3>(_rigid_body_state.velocity);
+        groundtruth_msg.angular_velocity    = toMsg<geometry_msgs::msg::Vector3>(_rigid_body_state.rates);
         groundtruth_msg.airspeed            = toMsg<geometry_msgs::msg::Vector3>(airspeed);
+        groundtruth_msg.linear_acceleration = toMsg<geometry_msgs::msg::Vector3>(acceleration_body);
 
-        nedToLla(rigid_body_state.position,
+        nedToLla(_rigid_body_state.position,
                  groundtruth_msg.latitude,
                  groundtruth_msg.longitude,
                  groundtruth_msg.altitude);
