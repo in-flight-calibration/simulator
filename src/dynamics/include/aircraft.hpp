@@ -60,8 +60,12 @@ public:
         _control = control;
     }
 
+    void setWind(const Eigen::Vector3d& wind) {
+        _wind = wind;
+    }
+
     Eigen::Vector3d getAirspeed() const {
-        return _state.velocity - _state.orientation.conjugate() * Environment::instance().getWind(_state.position);
+        return _state.velocity - _state.orientation.conjugate() * _wind;
     }
 
     void launch(double t) {
@@ -117,6 +121,9 @@ public:
 private:
     AircraftParameters _aircraft_param;
     AircraftControl _control;
+
+    Eigen::Vector3d _wind;
+
     double _launcher_start_time;
 
     void applyLauncherForcesAndTorques(double t, Eigen::Vector3d& forces, Eigen::Vector3d& torques) const {

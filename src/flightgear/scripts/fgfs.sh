@@ -87,7 +87,7 @@ gst-launch-1.0 -q \
     use-damage=false ! \
     videoconvert ! \
     videorate ! \
-    video/x-raw,framerate=15/1 ! \
+    video/x-raw,framerate=30/1 ! \
     x264enc tune=zerolatency \
         speed-preset=medium \
         bitrate=5000 \

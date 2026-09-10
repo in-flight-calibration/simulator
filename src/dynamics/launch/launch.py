@@ -1,5 +1,6 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import TimerAction
 
 
 def generate_launch_description():
@@ -14,9 +15,14 @@ def generate_launch_description():
             executable='dynamics',
             output='screen',
         ),
-        # Node(
-        #     package='control',
-        #     executable='control',
-        #     output='screen',
-        # ),
+        TimerAction(
+            period=10.0,
+            actions=[
+                Node(
+                    package='control',
+                    executable='control',
+                    output='screen',
+                ),
+            ],
+        ),
     ])

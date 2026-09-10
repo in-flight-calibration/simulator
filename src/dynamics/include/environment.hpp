@@ -17,10 +17,6 @@ public:
         return 1.225;
     }
 
-    Eigen::Vector3d getWind([[maybe_unused]] const Eigen::Vector3d& position) const {
-        return Eigen::Vector3d::Zero();
-    }
-
 private:
     Environment() = default;
     static Environment _instance;

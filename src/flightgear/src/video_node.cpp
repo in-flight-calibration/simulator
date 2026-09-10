@@ -102,7 +102,7 @@ void VideoNode::captureLoop()
 
         {
             std::lock_guard<std::mutex> lock(_frame_mutex);
-            frame.copyTo(_latest_frame);
+            _latest_frame = std::move(frame);
         }
     }
 }
@@ -118,7 +118,7 @@ void VideoNode::update()
             return;
         }
 
-        _latest_frame.copyTo(frame);
+        frame = std::move(_latest_frame);
     }
 
     auto msg = cv_bridge::CvImage(

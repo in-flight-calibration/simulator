@@ -9,6 +9,7 @@
 
 #include "aircraft.hpp"
 #include "solver.hpp"
+#include "wind.hpp"
 
 #include <mutex>
 
@@ -26,7 +27,8 @@ public:
             _home{home},
             _interval{interval.count() / 1000.0},
             _aircraft{aircraft},
-            _solver{aircraft}
+            _solver{aircraft},
+            _wind_model{interval.count() / 1000.0, WindModelParameters{}}
     {
         _control_sub =
             create_subscription<aircraft_msgs::msg::Control>(
@@ -54,6 +56,7 @@ private:
 
     Aircraft& _aircraft;
     Solver _solver;
+    WindModel _wind_model;
     std::mutex _mutex;
 
     RigidBodyState _rigid_body_state;
@@ -98,11 +101,13 @@ private:
     void timerCallback() {
         double time;
         RigidBodyState next_rigid_body_state;
-
         Eigen::Vector3d airspeed;
+
+        _wind_model.update();
 
         {
             std::lock_guard<std::mutex> lock(_mutex);
+            _aircraft.setWind(_wind_model.get(-_rigid_body_state.position.z()));
             _solver.step(_interval);
             time = _solver.getTime();
             next_rigid_body_state = _aircraft.getState();
