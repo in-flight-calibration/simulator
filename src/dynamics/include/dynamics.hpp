@@ -9,7 +9,6 @@
 
 #include "aircraft.hpp"
 #include "solver.hpp"
-#include "wind.hpp"
 
 #include <mutex>
 
@@ -27,8 +26,8 @@ public:
             _home{home},
             _interval{interval.count() / 1000.0},
             _aircraft{aircraft},
-            _solver{aircraft},
-            _wind_model{interval.count() / 1000.0, WindModelParameters{}}
+            _environment{*this},
+            _solver{aircraft}
     {
         _control_sub =
             create_subscription<aircraft_msgs::msg::Control>(
@@ -55,11 +54,14 @@ private:
     const double _interval;
 
     Aircraft& _aircraft;
+    Environment _environment;
     Solver _solver;
-    WindModel _wind_model;
     std::mutex _mutex;
 
+    double _time;
     RigidBodyState _rigid_body_state;
+    Eigen::Vector3d _airspeed;
+    Eigen::Vector3d _acceleration_body;
 
     rclcpp::Subscription<aircraft_msgs::msg::Control>::SharedPtr
         _control_sub;
@@ -99,38 +101,49 @@ private:
     }
 
     void timerCallback() {
-        double time;
-        RigidBodyState next_rigid_body_state;
-        Eigen::Vector3d airspeed;
+        const double altitude = -_rigid_body_state.position.z();
+        _environment.update(_time, altitude);
 
-        _wind_model.update();
+        RigidBodyState next_rigid_body_state;
 
         {
             std::lock_guard<std::mutex> lock(_mutex);
-            _aircraft.setWind(_wind_model.get(-_rigid_body_state.position.z()));
+            _aircraft.updateEnvironment(_environment);
             _solver.step(_interval);
-            time = _solver.getTime();
             next_rigid_body_state = _aircraft.getState();
-            airspeed = _aircraft.getAirspeed();
+
+            _time = _solver.getTime();
+            _airspeed = _aircraft.getAirspeed();
         }
 
         Eigen::Vector3d prev_velocity_ned = _rigid_body_state.orientation * _rigid_body_state.velocity;
         _rigid_body_state = next_rigid_body_state;
         Eigen::Vector3d velocity_ned = _rigid_body_state.orientation * _rigid_body_state.velocity;
         Eigen::Vector3d acceleration_ned = (velocity_ned - prev_velocity_ned) / _interval;
-        Eigen::Vector3d acceleration_body = _rigid_body_state.orientation.conjugate() * acceleration_ned;
+        _acceleration_body = _rigid_body_state.orientation.conjugate() * acceleration_ned;
+        publish();
+    }
 
-
+    void publish() {
+        auto toMsg = [](const Eigen::Vector3d& vec, auto& out) {
+            out.x = vec.x();
+            out.y = vec.y();
+            out.z = vec.z();
+        };
 
         aircraft_msgs::msg::Groundtruth groundtruth_msg;
 
         groundtruth_msg.header.stamp = this->now();
-        groundtruth_msg.position            = tf2::toMsg(_rigid_body_state.position);
-        groundtruth_msg.orientation         = tf2::toMsg(_rigid_body_state.orientation);
-        groundtruth_msg.linear_velocity     = toMsg<geometry_msgs::msg::Vector3>(_rigid_body_state.velocity);
-        groundtruth_msg.angular_velocity    = toMsg<geometry_msgs::msg::Vector3>(_rigid_body_state.rates);
-        groundtruth_msg.airspeed            = toMsg<geometry_msgs::msg::Vector3>(airspeed);
-        groundtruth_msg.linear_acceleration = toMsg<geometry_msgs::msg::Vector3>(acceleration_body);
+        toMsg(_rigid_body_state.position, groundtruth_msg.position);
+        toMsg(_rigid_body_state.velocity, groundtruth_msg.linear_velocity);
+        toMsg(_rigid_body_state.rates, groundtruth_msg.angular_velocity);
+        toMsg(_airspeed, groundtruth_msg.airspeed);
+        toMsg(_acceleration_body, groundtruth_msg.linear_acceleration);
+
+        groundtruth_msg.orientation.x = _rigid_body_state.orientation.x();
+        groundtruth_msg.orientation.y = _rigid_body_state.orientation.y();
+        groundtruth_msg.orientation.z = _rigid_body_state.orientation.z();
+        groundtruth_msg.orientation.w = _rigid_body_state.orientation.w();
 
         nedToLla(_rigid_body_state.position,
                  groundtruth_msg.latitude,
@@ -138,14 +151,5 @@ private:
                  groundtruth_msg.altitude);
 
         _groundtruth_pub->publish(groundtruth_msg);
-    }
-
-    template<typename T>
-    static T toMsg(const Eigen::Vector3d& vec) {
-        T msg;
-        msg.x = vec.x();
-        msg.y = vec.y();
-        msg.z = vec.z();
-        return msg;
     }
 };

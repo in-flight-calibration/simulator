@@ -13,7 +13,11 @@ find_package(std_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Control.msg"
   "msg/ControlState.msg"
+  "msg/Environment.msg"
   "msg/Groundtruth.msg"
+  "msg/SensorAir.msg"
+  "msg/SensorGnss.msg"
+  "msg/SensorImu.msg"
   DEPENDENCIES std_msgs geometry_msgs
 )
 

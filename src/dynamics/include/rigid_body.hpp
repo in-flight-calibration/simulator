@@ -49,7 +49,6 @@ struct RigidBodyState
 class RigidBody
 {
 public:
-
     RigidBody(
         RigidBodyParameters params) :
           _rigid_body_params{params},
@@ -120,7 +119,7 @@ public:
 
 protected:
     Eigen::Vector3d getGravity() const {
-        return _state.orientation.conjugate() * Environment::instance().getGravity(_state.position);
+        return _state.orientation.conjugate() * Environment::G;
     }
 
     virtual std::pair<Eigen::Vector3d, Eigen::Vector3d> getForcesAndTorques([[maybe_unused]] double t) const

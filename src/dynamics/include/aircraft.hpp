@@ -60,8 +60,9 @@ public:
         _control = control;
     }
 
-    void setWind(const Eigen::Vector3d& wind) {
-        _wind = wind;
+    void updateEnvironment(const Environment& environment) {
+        _air_density = environment.getAirDensity();
+        _wind = environment.getWind();
     }
 
     Eigen::Vector3d getAirspeed() const {
@@ -77,7 +78,7 @@ public:
     std::pair<Eigen::Vector3d, Eigen::Vector3d> getForcesAndTorques(double t) const override
     {
         const Eigen::Vector3d airspeed = getAirspeed();
-        const double dynamic_pressure = 0.5 * Environment::instance().getAirDensity(_state.position) * airspeed.squaredNorm();
+        const double dynamic_pressure = 0.5 * _air_density * airspeed.squaredNorm();
 
         Eigen::Vector3d forces = getGravity();
         Eigen::Vector3d torques = Eigen::Vector3d::Zero();
@@ -122,7 +123,8 @@ private:
     AircraftParameters _aircraft_param;
     AircraftControl _control;
 
-    Eigen::Vector3d _wind;
+    double _air_density     = 1.225;
+    Eigen::Vector3d _wind   = Eigen::Vector3d::Zero();
 
     double _launcher_start_time;
 

@@ -16,29 +16,32 @@ struct WindModelParameters {
 
 class WindModel {
 public:
-    WindModel(double dt, const WindModelParameters& params) : _dt(dt), _params(params) {}
+    WindModel(WindModelParameters params = WindModelParameters{}) : _params(params) {}
 
-    void update() {
+    void update(double dt, double altitude) {
         for (int i = 0; i < 3; ++i) {
             const double tau = std::max(_params.turbulence_tau[i], 1e-3);
-            const double a = std::exp(-_dt / tau);
+            const double a = std::exp(-dt / tau);
             const double b = _params.turbulence_sigma[i] * std::sqrt(1.0 - a * a);
             _turbulence[i] = a * _turbulence[i] + b * _normal(_rng);
         }
+
+        altitude = std::max(altitude, 0.1);
+        const double scale = std::pow(altitude / _params.reference_height, _params.height_exponent);
+        _wind = _params.mean_wind * scale + _turbulence;
     }
 
-    [[nodiscard]] Eigen::Vector3d get(double height) const {
-        height = std::max(height, 0.1);
-        const double scale = std::pow(height / _params.reference_height, _params.height_exponent);
-        return _params.mean_wind * scale + _turbulence;
+    Eigen::Vector3d get() const {
+        return _wind;
     }
 
     void reset() { _turbulence.setZero(); }
 
 private:
-    double _dt;
     WindModelParameters _params;
     Eigen::Vector3d _turbulence{0.0, 0.0, 0.0};
     std::mt19937 _rng{std::random_device{}()};
     std::normal_distribution<double> _normal{0.0, 1.0};
+
+    Eigen::Vector3d _wind{0.0, 0.0, 0.0};
 };
