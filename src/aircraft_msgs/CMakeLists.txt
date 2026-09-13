@@ -10,15 +10,14 @@ find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 
+file(GLOB MSG_FILES CONFIGURE_DEPENDS
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/msg/*.msg"
+)
+
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Control.msg"
-  "msg/ControlState.msg"
-  "msg/Environment.msg"
-  "msg/Groundtruth.msg"
-  "msg/SensorAir.msg"
-  "msg/SensorGnss.msg"
-  "msg/SensorImu.msg"
-  DEPENDENCIES std_msgs geometry_msgs
+    ${MSG_FILES}
+    DEPENDENCIES std_msgs geometry_msgs
 )
 
 ament_package()

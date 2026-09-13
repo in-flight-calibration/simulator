@@ -12,10 +12,10 @@ class Environment
 public:
     inline static const Eigen::Vector3d G = Eigen::Vector3d(0.0, 0.0, IsaModel::G);
 
-    Environment(rclcpp::Node& parent)
+    Environment(rclcpp::Node& parent, std::string environment_topic)
         : _parent(parent)
     {
-        _environment_pub = _parent.create_publisher<aircraft_msgs::msg::Environment>("environment", 10);
+        _environment_pub = _parent.create_publisher<aircraft_msgs::msg::Environment>(environment_topic, 10);
     }
 
     void update(double time, double altitude) {

@@ -2,7 +2,7 @@
 
 std_msgs/Header header
 
-float64 lattitude   # [deg]
+float64 latitude   # [deg]
 float64 longitude   # [deg]
 float64 altitude    # AMSL [m] 
 

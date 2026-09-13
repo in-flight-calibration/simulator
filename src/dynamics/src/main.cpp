@@ -33,7 +33,8 @@ int main(int argc, char * argv[])
         EPBC,
         std::chrono::milliseconds(2),
         "/dynamics/control",
-        "/dynamics/groundtruth"
+        "/dynamics/groundtruth",
+        "/environment"
     );
 
     std::cout << "Dynamics node running..." << std::endl;

@@ -20,13 +20,14 @@ public:
         Eigen::Vector3d home,
         std::chrono::milliseconds interval,
         std::string control_topic,
-        std::string groundtruth_topic
+        std::string groundtruth_topic,
+        std::string environment_topic
     )
         : rclcpp::Node("dynamics_node"),
             _home{home},
             _interval{interval.count() / 1000.0},
             _aircraft{aircraft},
-            _environment{*this},
+            _environment{*this, environment_topic},
             _solver{aircraft}
     {
         _control_sub =
@@ -59,15 +60,15 @@ private:
     std::mutex _mutex;
 
     double _time;
+
     RigidBodyState _rigid_body_state;
+    RigidBodyState _prev_rigid_body_state;
+
     Eigen::Vector3d _airspeed;
     Eigen::Vector3d _acceleration_body;
 
-    rclcpp::Subscription<aircraft_msgs::msg::Control>::SharedPtr
-        _control_sub;
-
+    rclcpp::Subscription<aircraft_msgs::msg::Control>::SharedPtr _control_sub;
     rclcpp::Publisher<aircraft_msgs::msg::Groundtruth>::SharedPtr _groundtruth_pub;
-
     rclcpp::TimerBase::SharedPtr _timer;
 
     void controlCallback(const aircraft_msgs::msg::Control::SharedPtr msg) {
@@ -103,25 +104,26 @@ private:
     void timerCallback() {
         const double altitude = -_rigid_body_state.position.z();
         _environment.update(_time, altitude);
+        update_dynamics();
+        calculate_acceleration();
+        publish();
+        _prev_rigid_body_state = _rigid_body_state;
+    }
 
-        RigidBodyState next_rigid_body_state;
+    void update_dynamics() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _aircraft.updateEnvironment(_environment);
+        _solver.step(_interval);
+        _time = _solver.getTime();
+        _rigid_body_state = _aircraft.getState();
+        _airspeed = _aircraft.getAirspeed();
+    }
 
-        {
-            std::lock_guard<std::mutex> lock(_mutex);
-            _aircraft.updateEnvironment(_environment);
-            _solver.step(_interval);
-            next_rigid_body_state = _aircraft.getState();
-
-            _time = _solver.getTime();
-            _airspeed = _aircraft.getAirspeed();
-        }
-
-        Eigen::Vector3d prev_velocity_ned = _rigid_body_state.orientation * _rigid_body_state.velocity;
-        _rigid_body_state = next_rigid_body_state;
+    void calculate_acceleration() {
+        Eigen::Vector3d prev_velocity_ned = _prev_rigid_body_state.orientation * _prev_rigid_body_state.velocity;
         Eigen::Vector3d velocity_ned = _rigid_body_state.orientation * _rigid_body_state.velocity;
         Eigen::Vector3d acceleration_ned = (velocity_ned - prev_velocity_ned) / _interval;
         _acceleration_body = _rigid_body_state.orientation.conjugate() * acceleration_ned;
-        publish();
     }
 
     void publish() {
@@ -134,6 +136,7 @@ private:
         aircraft_msgs::msg::Groundtruth groundtruth_msg;
 
         groundtruth_msg.header.stamp = this->now();
+        groundtruth_msg.time = _time;
         toMsg(_rigid_body_state.position, groundtruth_msg.position);
         toMsg(_rigid_body_state.velocity, groundtruth_msg.linear_velocity);
         toMsg(_rigid_body_state.rates, groundtruth_msg.angular_velocity);

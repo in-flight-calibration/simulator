@@ -2,6 +2,9 @@
 
 std_msgs/Header header
 
+# Simualation time [s]
+float64 time
+
 # Position in local/world frame [m].
 geometry_msgs/Point position
 

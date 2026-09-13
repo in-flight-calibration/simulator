@@ -15,6 +15,11 @@ def generate_launch_description():
             executable='dynamics',
             output='screen',
         ),
+        Node(
+            package='sensors',
+            executable='sensors',
+            output='screen',
+        ),
         TimerAction(
             period=10.0,
             actions=[
