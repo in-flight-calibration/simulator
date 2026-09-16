@@ -51,6 +51,7 @@ public:
         _state.position = initial_position;
         _state.velocity = initial_velocity;
         _state.orientation = initial_orientation;
+        _state.rates = Eigen::Vector3d::Zero();
 
         _control = AircraftControl{0.0, 0.0, 0.0, 0.0};
         _launcher_start_time = -1.0;

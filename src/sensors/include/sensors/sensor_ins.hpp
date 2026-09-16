@@ -54,15 +54,20 @@ private:
     }
 
     Eigen::Quaterniond calculateQuaternionEstimation(double dt, const Eigen::Quaterniond& q) {
-        const double alpha = 1.0 - std::exp(-dt / _params.tau);
-        const Eigen::Quaterniond dq = (_last_q.conjugate() * q).normalized();
-        const Eigen::AngleAxisd aa(dq);
-        const Eigen::AngleAxisd aa_lagged(alpha * aa.angle(), aa.axis());
-        const Eigen::Quaterniond dq_lagged(aa_lagged);
-        const Eigen::Quaterniond q_lagged = (_last_q * dq_lagged).normalized();
+        Eigen::Quaterniond q_processed = q;
+
+        if (_params.tau > DBL_EPSILON) {
+            const double alpha = 1.0 - std::exp(-dt / _params.tau);
+            const Eigen::Quaterniond dq = (_last_q.conjugate() * q).normalized();
+            const Eigen::AngleAxisd aa(dq);
+            const Eigen::AngleAxisd aa_lagged(alpha * aa.angle(), aa.axis());
+            const Eigen::Quaterniond dq_lagged(aa_lagged);
+            q_processed = (_last_q * dq_lagged).normalized();
+        }
+            
+        _last_q = q_processed;
         const Eigen::Quaterniond q_error = getNoiseError();
-        _last_q = q_lagged;
-        return (q_error * _params.alignment * q_lagged).normalized();
+        return (q_error * _params.alignment * q_processed).normalized();
     }
 
     Eigen::Quaterniond getNoiseError() {

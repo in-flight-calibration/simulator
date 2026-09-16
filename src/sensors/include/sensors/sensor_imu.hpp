@@ -66,8 +66,15 @@ private:
             groundtruth.linear_acceleration.x,
             groundtruth.linear_acceleration.y,
             groundtruth.linear_acceleration.z);
+        Eigen::Quaterniond orientation = Eigen::Quaterniond(
+            groundtruth.orientation.w,
+            groundtruth.orientation.x,
+            groundtruth.orientation.y,
+            groundtruth.orientation.z
+        );
+        const Eigen::Vector3d gravity = orientation.conjugate() * Eigen::Vector3d(0.0, 0.0, 9.805);
         Eigen::Vector3d accel_meas = 
-            _params.accel_rotation * _params.accel_scaling.cwiseProduct(accel) 
+            _params.accel_rotation * _params.accel_scaling.cwiseProduct(accel - gravity) 
             + _params.accel_bias;
         addNoise(accel_meas, _accel_dist, _params.accel_noise_sd);
         out.x = accel_meas.x();
@@ -100,12 +107,18 @@ private:
         }
 
         const auto mag_field_enu = result.value().field.magnetic_field;
-
-        Eigen::Vector3d mag_meas = Eigen::Vector3d(
+        Eigen::Quaterniond orientation = Eigen::Quaterniond(
+            groundtruth.orientation.w,
+            groundtruth.orientation.x,
+            groundtruth.orientation.y,
+            groundtruth.orientation.z
+        );
+        Eigen::Vector3d mag_meas_ned = Eigen::Vector3d(
             mag_field_enu.y,
             mag_field_enu.x,
             -mag_field_enu.z
-        ) / 1e6;
+        ) * 1e6;
+        Eigen::Vector3d mag_meas = orientation.conjugate() * mag_meas_ned;
         addNoise(mag_meas, _mag_dist, _params.mag_noise_sd);
         out.x = mag_meas.x();
         out.y = mag_meas.y();
