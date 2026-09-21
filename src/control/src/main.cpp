@@ -33,13 +33,19 @@ int main(int argc, char * argv[])
 
     auto trajectory_node = std::make_shared<TrajectoryNode>(
         ahrs_node,
-        control_node
+        control_node,
+        "/control/set_mode"
+    );
+
+    auto control_panel = std::make_shared<ControlPanel>(
+        "/control/set_mode"
     );
 
     rclcpp::executors::SingleThreadedExecutor executor;
     executor.add_node(ahrs_node);
     executor.add_node(control_node);
     executor.add_node(trajectory_node);
+    executor.add_node(control_panel->get_node());
     executor.spin();
 
     rclcpp::shutdown();

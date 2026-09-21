@@ -59,6 +59,18 @@ public:
 
     void setControl([[maybe_unused]] double t, const AircraftControl& control) {
         _control = control;
+
+        if (_control.throttle > 0.9) {
+            if (_high_throttle_time < 0.0) {
+                _high_throttle_time = t;
+            }
+        } else {
+            _high_throttle_time = -1.0;
+        }
+
+        if (_high_throttle_time >= 0.0 && t > _high_throttle_time + 1.0) {
+            launch(t);
+        }
     }
 
     void updateEnvironment(const Environment& environment) {
@@ -127,6 +139,7 @@ private:
     double _air_density     = 1.225;
     Eigen::Vector3d _wind   = Eigen::Vector3d::Zero();
 
+    double _high_throttle_time = -1.0;
     double _launcher_start_time;
 
     void applyLauncherForcesAndTorques(double t, Eigen::Vector3d& forces, Eigen::Vector3d& torques) const {

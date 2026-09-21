@@ -1,27 +1,37 @@
 #include <rclcpp/rclcpp.hpp>
+#include <aircraft_msgs/msg/control_set_mode.hpp>
 
 #include "ahrs/ahrs.hpp"
 #include "control.hpp"
+#include "panel.hpp"
 
 class TrajectoryNode : public rclcpp::Node
 {
 public:
     static constexpr size_t UPDATE_INTERVAL_MS = 100;
 
-    enum class Phase {
-        TAKEOFF,
-        CRUISE,
-        SLALOM,
+    enum class Mode : uint8_t {
+        IDLE = aircraft_msgs::msg::ControlSetMode::IDLE,
+        TAKEOFF = aircraft_msgs::msg::ControlSetMode::TAKEOFF,
+        CRUISE = aircraft_msgs::msg::ControlSetMode::CRUISE,
+        SLALOM = aircraft_msgs::msg::ControlSetMode::SLALOM,
     };
 
     TrajectoryNode(
         std::shared_ptr<Ahrs> ahrs,
-        std::shared_ptr<ControlNode> control
+        std::shared_ptr<ControlNode> control,
+        std::string control_set_mode_topic
     ) : 
         rclcpp::Node("trajectory_node"), 
         _ahrs(ahrs), 
         _control(control) 
     {
+        _set_mode_sub = this->create_subscription<aircraft_msgs::msg::ControlSetMode>(
+            control_set_mode_topic,
+            10,
+            std::bind(&TrajectoryNode::setModeCallback, this, std::placeholders::_1)
+        );
+
         _timer = this->create_wall_timer(
             std::chrono::milliseconds(UPDATE_INTERVAL_MS),
             std::bind(&TrajectoryNode::update, this)
@@ -31,22 +41,40 @@ public:
 private:
     std::shared_ptr<Ahrs> _ahrs;
     std::shared_ptr<ControlNode> _control;
+
+    rclcpp::Subscription<aircraft_msgs::msg::ControlSetMode>::SharedPtr _set_mode_sub;
     rclcpp::TimerBase::SharedPtr _timer;
 
-    Phase _phase = Phase::TAKEOFF;
-    double _phase_start_time = 0.0;
+    Mode _mode = Mode::IDLE;
+    double _mode_start_time = 0.0;
 
-    void setPhase(Phase phase) {
-        _phase = phase;
-        _phase_start_time = this->now().seconds();
+    double _target_height = 0;
+    double _target_speed = 30.0;
+
+    void setMode(Mode mode) {
+        _mode = mode;
+        _mode_start_time = this->now().seconds();
+        initMode();
+    }
+
+    void setModeCallback(const aircraft_msgs::msg::ControlSetMode::SharedPtr msg) {
+        _target_height = msg->target_height;
+        _target_speed = msg->target_speed;
+        setMode(static_cast<Mode>(msg->mode));
+    }
+
+    void updateIdle() {
+        auto& control_state = _control->getControlState();
+
+        control_state.desired_height = NAN;
+        control_state.desired_speed = NAN;
+
+        control_state.desired_attitude = Eigen::Vector2d(NAN,NAN);
+        control_state.desired_rates = Eigen::Vector3d{NAN, NAN, NAN};
+        control_state.desired_throttle = NAN;
     }
 
     void updateTakeoff() {
-        if (_ahrs->getPositionNed().z() < -200.0) {
-            setPhase(Phase::CRUISE);
-            return;
-        }
-
         auto& control_state = _control->getControlState();
 
         control_state.desired_height = NAN;
@@ -57,15 +85,10 @@ private:
     }
 
     void updateCruise() {
-        if (this->now().seconds() - _phase_start_time > 30.0) {
-            setPhase(Phase::SLALOM);
-            return;
-        }
-
         auto& control_state = _control->getControlState();
 
-        control_state.desired_height = 200.0;
-        control_state.desired_speed = 30.0;
+        control_state.desired_height = _target_height;
+        control_state.desired_speed = _target_speed;
 
         control_state.desired_attitude[0] = 0.0;
     }
@@ -73,21 +96,34 @@ private:
     void updateSlalom() {
         auto& control_state = _control->getControlState();
 
-        control_state.desired_height = 200.0;
-        control_state.desired_speed = 30.0;
+        control_state.desired_height = _target_height;
+        control_state.desired_speed = _target_speed;
 
         control_state.desired_attitude[0] = M_PI_4 * std::sin(2 * M_PI * this->now().seconds() / 10.0);
     }
 
+    void initMode() {
+        switch(_mode) {
+            case Mode::CRUISE:
+            case Mode::SLALOM:
+            case Mode::IDLE:
+            case Mode::TAKEOFF:
+                break;
+        }
+    }
+
     void update() {
-        switch(_phase) {
-            case Phase::TAKEOFF:
+        switch(_mode) {
+            case Mode::IDLE:
+                updateIdle();
+                break;
+            case Mode::TAKEOFF:
                 updateTakeoff();
                 break;
-            case Phase::CRUISE:
+            case Mode::CRUISE:
                 updateCruise();
                 break;
-            case Phase::SLALOM:
+            case Mode::SLALOM:
                 updateSlalom();
                 break;
         }

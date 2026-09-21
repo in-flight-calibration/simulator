@@ -81,7 +81,6 @@ private:
 
         std::lock_guard<std::mutex> lock(_mutex);
         const double time = _solver.getTime();
-        _aircraft.launch(time);
         _aircraft.setControl(time, control);
     }
 

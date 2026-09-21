@@ -313,8 +313,6 @@ private:
         const double V = _ahrs->getAirspeed().norm();
 
         if (V > 1.0) {
-            
-
             const double dpsi = G / V * std::tan(phi_d);
             _control_state.desired_rates[2] = (dpsi * std::cos(_control_state.desired_attitude[1]) - _control_state.desired_rates[1] * std::sin(phi_d)) / std::cos(phi_d);
 
@@ -325,6 +323,20 @@ private:
 
     void update_rates()
     {
+        if (!_control_state.desired_rates.allFinite() 
+            || !std::isfinite(_control_state.desired_throttle)) {
+            _desired_control.aileron = 0.0;
+            _desired_control.elevator = 0.0;
+            _desired_control.rudder = 0.0;
+            _desired_control.throttle = 0.0;
+
+            for (int i = 0; i < 3; ++i) {
+                _control_state.rates_integral[i] = 0.0;
+            }
+
+            return;
+        }
+
         const Eigen::Vector3d angular_velocity =_ahrs->getAngularVelocity();
         const Eigen::Vector3d error =_control_state.desired_rates - angular_velocity;
 

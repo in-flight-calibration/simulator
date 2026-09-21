@@ -20,14 +20,9 @@ def generate_launch_description():
             executable='sensors',
             output='screen',
         ),
-        TimerAction(
-            period=10.0,
-            actions=[
-                Node(
-                    package='control',
-                    executable='control',
-                    output='screen',
-                ),
-            ],
-        ),
+        Node(
+            package='control',
+            executable='control',
+            output='screen',
+        )
     ])

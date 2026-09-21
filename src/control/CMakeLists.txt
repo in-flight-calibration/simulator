@@ -19,6 +19,12 @@ find_package(tf2_ros REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
 add_executable(control 
     src/main.cpp
 )
@@ -37,6 +43,7 @@ target_link_libraries(control
     tf2_ros::tf2_ros
 
     Eigen3::Eigen
+    Qt6::Widgets
 )
 
 install(TARGETS
