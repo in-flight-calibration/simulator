@@ -66,18 +66,20 @@ bool VideoNode::openPipeline()
     std::ostringstream pipeline;
 
     pipeline
-        << "udpsrc port=" << _udp_port
+        << "udpsrc multicast-group=239.255.0.1 "
+        "auto-multicast=true "
+        << "port=" << _udp_port
         << " ! application/x-rtp,"
-           "media=video,"
-           "encoding-name=H264,"
-           "payload=96 "
+        "media=video,"
+        "encoding-name=H264,"
+        "payload=96 "
         << "! rtph264depay "
         << "! avdec_h264 "
         << "! videoconvert "
         << "! appsink "
-           "sync=false "
-           "drop=true "
-           "max-buffers=1";
+        "sync=false "
+        "drop=true "
+        "max-buffers=1";
 
     const auto pipeline_string = pipeline.str();
 

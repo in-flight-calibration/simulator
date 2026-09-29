@@ -94,8 +94,9 @@ gst-launch-1.0 -q \
         qp-min=18 \
         qp-max=30 ! \
     rtph264pay ! \
-    udpsink host=127.0.0.1 \
+    udpsink host=239.255.0.1 \
         port="$PORT_VIDEO" \
+        auto-multicast=true \
         sync=false \
         async=false \
     > "$STREAM_LOG_FILE" 2>&1 &
