@@ -14,7 +14,7 @@ int main(int argc, char * argv[])
     auto flightgear_control_node = std::make_shared<FlightgearControlNode>(
         "/dynamics/groundtruth",
         5500,
-        std::chrono::milliseconds(66)
+        std::chrono::milliseconds(15)
     );
 
     auto video_node = std::make_shared<VideoNode>(

@@ -27,6 +27,9 @@ public:
     void run();
 
 private:
+    static constexpr int IMAGE_WIDTH = 1280;
+    static constexpr int IMAGE_HEIGHT = 720;
+
     bool openPipeline();
     void captureLoop();
     void update();

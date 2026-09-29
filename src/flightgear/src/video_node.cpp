@@ -118,7 +118,10 @@ void VideoNode::update()
             return;
         }
 
-        frame = std::move(_latest_frame);
+        cv::resize(
+            _latest_frame,
+            frame,
+            cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
     }
 
     auto msg = cv_bridge::CvImage(
