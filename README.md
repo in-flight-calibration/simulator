@@ -11,7 +11,7 @@ Choose one of the following setup paths:
 
 Both paths use the same source workspace and require FlightGear. See [Install FlightGear](#install-flightgear).
 
-## With Docker
+### With Docker
 
 The commands below assume you are in the workspace root: the directory containing the `Dockerfile` and `src/` directory.
 
@@ -61,7 +61,7 @@ After closing the container, revoke the X11 permission on the host if you enable
 xhost -local:root
 ```
 
-## Without Docker
+### Without Docker
 
 Install [ROS 2 Rolling](https://docs.ros.org/en/rolling/Installation.html) on the host, following the instructions for your Ubuntu version. Then, from your ROS workspace root (the directory containing `src/`), source ROS and install `rosdep` if needed, initialize it, and install the package dependencies:
 
@@ -83,23 +83,44 @@ source install/setup.bash
 
 Install CUDA separately on the host only if your own GPU-enabled dependencies or applications require it; the Docker image's CUDA installation does not apply to a native installation.
 
-## Install FlightGear
+### Install FlightGear
 
-Download the FlightGear AppImage from [flightgear.org](https://www.flightgear.org/) and place it where you want to run it.
-
-For a native installation, make it executable and launch it:
+Reccomended option to install [flightgear.org](https://www.flightgear.org/) is to do it with script provided in `flightgear` dir:
 
 ```bash
-chmod +x ./FlightGear.AppImage
-./FlightGear.AppImage
+source ./src/flightgear/scripts/fgfs_install.sh
 ```
 
-Replace `FlightGear.AppImage` with the downloaded file's actual name.
+## Usage
 
-For Docker, AppImages may need to be extracted before they can run. From the directory containing the AppImage:
+After building the workspace, open a terminal in the workspace root and source both ROS 2 and the workspace overlay:
 
 ```bash
-chmod +x ./FlightGear.AppImage
-./FlightGear.AppImage --appimage-extract
-./squashfs-root/AppRun
+source /opt/ros/rolling/setup.bash
+source install/setup.bash
 ```
+
+Start the complete simulation with the launch file provided by the `dynamics` package:
+
+```bash
+ros2 launch dynamics launch.py
+```
+
+This starts the FlightGear integration, aircraft dynamics simulation, sensor simulation, and control system. The control panel lets you select `IDLE`, `TAKEOFF`, `CRUISE`, or `SLALOM` and set target height and speed. 
+
+### ROS topics
+
+The launch starts these publishers. Custom message types are defined in the `aircraft_msgs` package.
+
+| Topic | Message type | Published data |
+|---|---|---|
+| `/dynamics/groundtruth` | `aircraft_msgs/msg/Groundtruth` | Simulated aircraft state: position, orientation, linear and angular velocity, acceleration, airspeed, simulation time, and latitude/longitude/altitude. Consumed by the sensor, control, and FlightGear nodes. |
+| `/environment` | `aircraft_msgs/msg/Environment` | Simulated atmospheric pressure, temperature, air density, and wind. Consumed by the sensor node. |
+| `/sensors/air` | `aircraft_msgs/msg/SensorAir` | Simulated air-data readings: static pressure, differential pressure, and temperature. |
+| `/sensors/gnss` | `aircraft_msgs/msg/SensorGnss` | Simulated GNSS readings: latitude, longitude, altitude, ground speed, course, and vertical speed. |
+| `/sensors/imu` | `aircraft_msgs/msg/SensorImu` | Simulated 9-DOF IMU readings: accelerometer, gyroscope, and magnetometer vectors. |
+| `/sensors/ins` | `aircraft_msgs/msg/SensorIns` | Simulated INS orientation quaternion estimate. |
+| `/dynamics/control` | `aircraft_msgs/msg/Control` | Controller outputs: aileron, elevator, rudder, and throttle commands. The dynamics node consumes these commands. |
+| `/control/state` | `aircraft_msgs/msg/ControlState` | Controller state and diagnostics, including target speed/height, errors, desired attitude/rates, and integrals. |
+| `/control/set_mode` | `aircraft_msgs/msg/ControlSetMode` | Control panel commands: selected mode (`IDLE`, `TAKEOFF`, `CRUISE`, or `SLALOM`), target height, and target speed. Consumed by the trajectory controller. |
+| `/flightgear/image` | `sensor_msgs/msg/Image` | Video frames received from FlightGear, published as BGR images. |
