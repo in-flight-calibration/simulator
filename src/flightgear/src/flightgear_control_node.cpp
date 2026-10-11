@@ -14,17 +14,27 @@
 #include <tf2/LinearMath/Matrix3x3.hpp>
 
 FlightgearControlNode::FlightgearControlNode(
-    const std::string& groundtruth_topic,
+    const std::string& vehicle_attitude_topic,
+    const std::string& vehicle_global_position_topic,
     std::uint16_t port,
     std::chrono::microseconds interval)
     : Node("flightgear_control_node"), _port{port}, _interval{interval}
 {
-    _groundtruth_sub =
-        create_subscription<aircraft_msgs::msg::Groundtruth>(
-            groundtruth_topic,
+    _att_sub =
+        create_subscription<px4_msgs::msg::VehicleAttitude>(
+            vehicle_attitude_topic,
             rclcpp::SensorDataQoS(),
             std::bind(
-                &FlightgearControlNode::groundtruthCallback,
+                &FlightgearControlNode::attitudeCallback,
+                this,
+                std::placeholders::_1));
+
+    _vgp_sub =
+        create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
+            vehicle_global_position_topic,
+            rclcpp::SensorDataQoS(),
+            std::bind(
+                &FlightgearControlNode::globalPositionCallback,
                 this,
                 std::placeholders::_1));
 }
@@ -85,21 +95,28 @@ bool FlightgearControlNode::closeSocket()
     return false;
 }
 
-void FlightgearControlNode::groundtruthCallback(
-    const aircraft_msgs::msg::Groundtruth::SharedPtr msg)
+void FlightgearControlNode::attitudeCallback(
+    const px4_msgs::msg::VehicleAttitude::SharedPtr msg)
 {
-    _packet.latitude = msg->latitude;
-    _packet.longitude = msg->longitude;
-    _packet.altitude_ft = msg->altitude * M_TO_FT;
-    
-    tf2::Quaternion q;
+    tf2::Quaternion q
+        {msg->q[1], msg->q[2], msg->q[3], msg->q[0]};
     double roll, pitch, yaw;
-    tf2::fromMsg(msg->orientation, q);
     tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
     _packet.roll_deg = roll * RAD_TO_DEG;
     _packet.pitch_deg = pitch * RAD_TO_DEG;
     _packet.heading_deg = yaw * RAD_TO_DEG;
+
+    _packet_updated = true;
+}
+
+void FlightgearControlNode::globalPositionCallback(
+    const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg)
+{
+    _packet.latitude = msg->lat;
+    _packet.longitude = msg->lon;
+    _packet.altitude_ft = msg->alt * M_TO_FT;
+    
     _packet_updated = true;
 }
 

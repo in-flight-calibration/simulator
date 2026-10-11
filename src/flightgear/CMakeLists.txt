@@ -11,11 +11,11 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(aircraft_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(px4_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -38,11 +38,11 @@ target_include_directories(flightgear PUBLIC
 target_link_libraries(flightgear 
     PUBLIC 
     ament_index_cpp::ament_index_cpp
-    aircraft_msgs::aircraft_msgs
     cv_bridge::cv_bridge
     geographic_msgs::geographic_msgs
     image_transport::image_transport
     rclcpp::rclcpp 
+    px4_msgs::px4_msgs
     sensor_msgs::sensor_msgs
     std_msgs::std_msgs
     tf2::tf2

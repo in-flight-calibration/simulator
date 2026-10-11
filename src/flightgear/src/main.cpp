@@ -12,7 +12,8 @@ int main(int argc, char * argv[])
     process.run({SCRIPTS_DIR "/fgfs.sh"});
 
     auto flightgear_control_node = std::make_shared<FlightgearControlNode>(
-        "/dynamics/groundtruth",
+        "/fmu/out/vehicle_attitude",
+        "/fmu/out/vehicle_global_position_groundtruth",
         5500,
         std::chrono::milliseconds(15)
     );
@@ -20,7 +21,7 @@ int main(int argc, char * argv[])
     auto video_node = std::make_shared<VideoNode>(
         5501,
         "/flightgear/image",
-        std::chrono::milliseconds(66)
+        std::chrono::milliseconds(33)
     );
 
     flightgear_control_node->run();

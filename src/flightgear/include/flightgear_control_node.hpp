@@ -1,7 +1,8 @@
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
-#include <aircraft_msgs/msg/groundtruth.hpp>
+#include <px4_msgs/msg/vehicle_attitude.hpp>
+#include <px4_msgs/msg/vehicle_global_position.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -12,7 +13,8 @@ class FlightgearControlNode : public rclcpp::Node
 {
 public:
     FlightgearControlNode(
-        const std::string& groundtruth_topic,
+        const std::string& vehicle_attitude_topic,
+        const std::string& vehicle_global_position_topic,
         std::uint16_t port,
         std::chrono::microseconds interval);
 
@@ -27,8 +29,8 @@ private:
     int _socket{-1};
     sockaddr_in _destination{};
 
-    rclcpp::Subscription<aircraft_msgs::msg::Groundtruth>::SharedPtr
-        _groundtruth_sub;
+    rclcpp::Subscription<px4_msgs::msg::VehicleAttitude>::SharedPtr _att_sub;
+    rclcpp::Subscription<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr _vgp_sub;
 
     rclcpp::TimerBase::SharedPtr _timer;
 
@@ -47,8 +49,10 @@ private:
     bool openSocket();
     bool closeSocket();
 
-    void groundtruthCallback(
-        const aircraft_msgs::msg::Groundtruth::SharedPtr msg);
+    void attitudeCallback(
+        const px4_msgs::msg::VehicleAttitude::SharedPtr msg);
+    void globalPositionCallback(
+        const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg);
     void timerCallback();
 
     static constexpr double M_TO_FT = 3.28083989501312;
