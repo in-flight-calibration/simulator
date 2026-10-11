@@ -2,7 +2,7 @@ AirspeedValidated.msg
 SensorCombined.msg
 SensorGnss.msg
 SensorMag.msg
-TimesyncStatus.msg
+VehicleAcceleration.msg
 VehicleAngularVelocity.msg
 VehicleAttitude.msg
 VehicleGlobalPosition.msg
