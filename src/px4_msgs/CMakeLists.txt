@@ -3,6 +3,7 @@ project(px4_msgs)
 
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(PX4_TOPICS_FILE "$ENV{DDS_TOPICS_FILE}")
 if(PX4_TOPICS_FILE STREQUAL "")
@@ -15,15 +16,20 @@ if(NOT IS_ABSOLUTE "${PX4_TOPICS_FILE}")
 endif()
 
 execute_process(
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/import_messages.sh"
-    RESULT_VARIABLE import_result
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/sync.py"
+        --topics-file "${PX4_TOPICS_FILE}"
+    RESULT_VARIABLE sync_result
 )
-if(NOT import_result EQUAL 0)
-    message(FATAL_ERROR "Failed to import PX4 messages")
+if(NOT sync_result EQUAL 0)
+    message(FATAL_ERROR "Failed to sync PX4 messages")
 endif()
+file(GLOB_RECURSE PX4_SOURCE_MSG_FILES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../px4/PX4-Autopilot/msg/*.msg"
+)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${PX4_TOPICS_FILE}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/import_messages.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sync.py"
+    ${PX4_SOURCE_MSG_FILES}
 )
 
 file(GLOB PX4_MSG_FILES CONFIGURE_DEPENDS
@@ -39,12 +45,6 @@ endif()
 rosidl_generate_interfaces(${PROJECT_NAME}
     ${PX4_MSG_FILES}
 )
-
-add_custom_target(import_px4_messages
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/import_messages.sh"
-    VERBATIM
-)
-add_dependencies(${PROJECT_NAME} import_px4_messages)
 
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()
