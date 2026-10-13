@@ -1,12 +1,25 @@
-# Simulator
+# PX4-based ROS2 simulator for vision algorithms
 
 ## Features
-* Links ROS2 with FlightGear
+* Semi-automated installation and automated launch
 
 ## Installation
 
-### Install dependencies
+### Prerequirements (not included in installation script)
+* ROS2 (https://www.ros.org/)
 
-### Install ROS2 (https://www.ros.org/)
+### Installation script
+Use dedicated script to install dependencies and configurate software.
 
-### Install FlightGear (https://www.flightgear.org)
+Ubuntu:
+```
+./setup/ubuntu.sh
+```
+
+## Usage:
+Use dedicated script to launch simulator.
+
+Ubuntu:
+```
+./simulator.sh
+```
