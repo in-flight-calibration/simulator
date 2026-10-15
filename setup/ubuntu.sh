@@ -3,7 +3,7 @@ set -e
 
 git submodule update --init --recursive
 
-apt install -ylibyaml-cpp-dev
+sudo apt install -y libyaml-cpp-dev
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "Project directory: ${PROJECT_DIR}"
@@ -19,3 +19,4 @@ echo "Detected ROS2 distro: ${ROS_DISTRO}"
 
 sudo rosdep init 2>/dev/null || true
 rosdep update
+rosdep install --from-paths "$PROJECT_DIR/src" --ignore-src -y --rosdistro "$ROS_DISTRO"

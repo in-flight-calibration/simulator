@@ -47,6 +47,10 @@ int main(int argc, char * argv[])
         .yaw = cam["yaw"].as<float>()
     };
 
+    if (camera.width <= 0 || camera.height <= 0 || camera.fps <= 0) {
+        throw std::runtime_error("Camera width, height, and fps must be positive");
+    }
+
     Process process = start_fgfs(camera);
 
     auto flightgear_control_node = std::make_shared<FlightgearControlNode>(
