@@ -13,7 +13,7 @@ FlightgearControlNode::FlightgearControlNode(
     const std::string& vehicle_attitude_topic,
     const std::string& vehicle_global_position_topic,
     std::uint16_t port)
-    : Node("flightgear_control_node"), _camera(camera), _port{port}, _interval{std::chrono::milliseconds(2 * 1000 / camera.fps)}
+    : Node("flightgear_control_node"), _camera(camera), _port{port}, _interval{std::chrono::microseconds(1000000 / (2LL * camera.fps))}
 {
     _camera_orientation.setRPY(
         camera.roll / RAD_TO_DEG,
