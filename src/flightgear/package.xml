@@ -13,14 +13,15 @@
   <depend>cv_bridge</depend>
   <depend>geographic_msgs</depend>
   <depend>image_transport</depend>
-  <depend>OpenCV</depend>
+  <depend>libopencv-dev</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
+   <depend>yaml-cpp</depend>
 
-  <depend>aircraft_msgs</depend>
+  <depend>px4_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

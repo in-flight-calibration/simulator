@@ -11,11 +11,11 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(aircraft_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(px4_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -23,6 +23,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 add_executable(flightgear 
     src/main.cpp
@@ -38,17 +39,18 @@ target_include_directories(flightgear PUBLIC
 target_link_libraries(flightgear 
     PUBLIC 
     ament_index_cpp::ament_index_cpp
-    aircraft_msgs::aircraft_msgs
     cv_bridge::cv_bridge
     geographic_msgs::geographic_msgs
     image_transport::image_transport
     rclcpp::rclcpp 
+    px4_msgs::px4_msgs
     sensor_msgs::sensor_msgs
     std_msgs::std_msgs
     tf2::tf2
     tf2_eigen::tf2_eigen
     tf2_geometry_msgs::tf2_geometry_msgs
     tf2_ros::tf2_ros
+    yaml-cpp::yaml-cpp
     ${OpenCV_LIBS}
 )
 

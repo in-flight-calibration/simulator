@@ -1,0 +1,8 @@
+camera:
+  width: 1280
+  height: 720
+  fps: 30
+  fov: 75.0
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0

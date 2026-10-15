@@ -13,13 +13,15 @@
 #include <string>
 #include <thread>
 
+#include "camera.hpp"
+
 class VideoNode : public rclcpp::Node
 {
 public:
     VideoNode(
-        std::uint16_t udp_port,
+        const Camera& camera,
         const std::string& topic,
-        std::chrono::milliseconds update_interval
+        std::uint16_t udp_port
     );
 
     ~VideoNode() override;
@@ -27,8 +29,7 @@ public:
     void run();
 
 private:
-    static constexpr int IMAGE_WIDTH = 1280;
-    static constexpr int IMAGE_HEIGHT = 720;
+    const Camera& _camera;
 
     bool openPipeline();
     void captureLoop();
