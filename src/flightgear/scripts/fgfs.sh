@@ -54,6 +54,7 @@ fgfs \
     --max-fps="$FGFS_FPS" \
     --prop:/sim/gui/menubar=false \
     --prop:/sim/gui/menubar/autohide=true \
+    --prop:/sim/menubar/visibility=false \
     --prop:/sim/traffic-manager/enabled=0 \
     --disable-sound \
     --disable-random-objects \
