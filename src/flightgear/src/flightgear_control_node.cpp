@@ -8,18 +8,19 @@
 #include <cmath>
 #include <stdexcept>
 
-#include <tf2_eigen/tf2_eigen.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <tf2/LinearMath/Quaternion.hpp>
-#include <tf2/LinearMath/Matrix3x3.hpp>
-
 FlightgearControlNode::FlightgearControlNode(
+    const Camera& camera,
     const std::string& vehicle_attitude_topic,
     const std::string& vehicle_global_position_topic,
-    std::uint16_t port,
-    std::chrono::microseconds interval)
-    : Node("flightgear_control_node"), _port{port}, _interval{interval}
+    std::uint16_t port)
+    : Node("flightgear_control_node"), _camera(camera), _port{port}, _interval{std::chrono::milliseconds(2 * 1000 / camera.fps)}
 {
+    _camera_orientation.setRPY(
+        camera.roll / RAD_TO_DEG,
+        camera.pitch / RAD_TO_DEG,
+        camera.yaw / RAD_TO_DEG
+    );
+
     _att_sub =
         create_subscription<px4_msgs::msg::VehicleAttitude>(
             vehicle_attitude_topic,
@@ -101,7 +102,7 @@ void FlightgearControlNode::attitudeCallback(
     tf2::Quaternion q
         {msg->q[1], msg->q[2], msg->q[3], msg->q[0]};
     double roll, pitch, yaw;
-    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+    tf2::Matrix3x3(q * _camera_orientation).getRPY(roll, pitch, yaw);
 
     _packet.roll_deg = roll * RAD_TO_DEG;
     _packet.pitch_deg = pitch * RAD_TO_DEG;

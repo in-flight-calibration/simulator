@@ -2,6 +2,9 @@
 
 ## Features
 * Semi-automated installation and automated launch
+* Automated generation of ROS2 messages based on uORB topics.
+* Automated estabilishion of Zenoh connection between PX4 and ROS2
+* Visualization of flight with Flightgear and simulation of camera.
 
 ## Installation
 
@@ -23,3 +26,6 @@ Ubuntu:
 ```
 ./simulator.sh
 ```
+
+To control the simulator use any Ground Control station: QGroundControl, Mission Planner. ApmPlanner etc.
+The latest QGroundControl AppImage is downloaded with setup script.

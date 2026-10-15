@@ -7,13 +7,14 @@
 #include <utility>
 
 VideoNode::VideoNode(
-    std::uint16_t udp_port,
+    const Camera& camera,
     const std::string& topic,
-    std::chrono::milliseconds update_interval)
+    std::uint16_t udp_port)
     : Node("video_node"),
+      _camera(camera),
       _udp_port(udp_port),
       _topic(topic),
-      _update_interval(update_interval)
+      _update_interval(std::chrono::milliseconds(1000 / camera.fps))
 {
     _image_pub = image_transport::create_publisher(
         *this,
@@ -123,7 +124,7 @@ void VideoNode::update()
         cv::resize(
             _latest_frame,
             frame,
-            cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+            cv::Size(_camera.width, _camera.height));
     }
 
     auto msg = cv_bridge::CvImage(

@@ -9,22 +9,32 @@
 #include <netinet/in.h>
 #include <string>
 
+#include <tf2_eigen/tf2_eigen.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2/LinearMath/Quaternion.hpp>
+#include <tf2/LinearMath/Matrix3x3.hpp>
+
+#include "camera.hpp"
+
 class FlightgearControlNode : public rclcpp::Node
 {
 public:
     FlightgearControlNode(
+        const Camera& camera,
         const std::string& vehicle_attitude_topic,
         const std::string& vehicle_global_position_topic,
-        std::uint16_t port,
-        std::chrono::microseconds interval);
+        std::uint16_t port
+    );
 
     ~FlightgearControlNode() override;
 
     void run();
 
 private:
+    const Camera& _camera;
     std::uint16_t _port;
     std::chrono::microseconds _interval;
+    tf2::Quaternion _camera_orientation;
 
     int _socket{-1};
     sockaddr_in _destination{};
