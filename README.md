@@ -6,7 +6,7 @@ Links ROS 2 with FlightGear.
 
 Choose one of the following setup paths:
 
-- [Install and run with Docker](#with-docker) — uses the provided [Dockerfile](../../Dockerfile) with ROS 2 Rolling and the CUDA toolkit.
+- [Install and run with Docker](#with-docker) — uses the provided [Dockerfile](Dockerfile) with ROS 2 Rolling and the CUDA toolkit.
 - [Install and run natively, without Docker](#without-docker) — install ROS 2 Rolling and the project dependencies directly on the host.
 
 Both paths use the same source workspace and require FlightGear. See [Install FlightGear](#install-flightgear).
