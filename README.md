@@ -85,7 +85,7 @@ Install CUDA separately on the host only if your own GPU-enabled dependencies or
 
 ### Install FlightGear
 
-Reccomended option to install [flightgear.org](https://www.flightgear.org/) is to do it with script provided in `flightgear` dir:
+The recommended option for installing [FlightGear](https://www.flightgear.org/) is to use the script provided in the `flightgear` directory:
 
 ```bash
 source ./src/flightgear/scripts/fgfs_install.sh
