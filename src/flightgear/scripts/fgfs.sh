@@ -7,6 +7,7 @@ FGFS_FPS="${FGFS_FPS:-30}"
 
 FGFS_PORT_CONTROL="${FGFS_PORT_CONTROL:-5500}"
 FGFS_PORT_VIDEO="${FGFS_PORT_VIDEO:-5501}"
+FGFS_PORT_PROPS="${FGFS_PORT_PROPS:-5502}"
 
 FGFS_PID_FILE="/tmp/fgfs.pid"
 GSTREAMER_PID_FILE="/tmp/gst.pid"
@@ -45,6 +46,7 @@ fgfs \
     --log-level=info \
     --airport=EPBC --runway=28L \
     --generic=socket,in,$((2 * FGFS_FPS)),,"$FGFS_PORT_CONTROL",udp,control \
+    --telnet="$FGFS_PORT_PROPS" \
     --fdm=null \
     --aircraft=uav \
     --timeofday=noon \
@@ -89,7 +91,7 @@ gst-launch-1.0 -q \
     use-damage=false ! \
     videoconvert ! \
     videorate ! \
-    video/x-raw,framerate=$FGFS_FPS/1 ! \
+    video/x-raw,framerate="$FGFS_FPS"/1 ! \
     x264enc tune=zerolatency \
         speed-preset=medium \
         bitrate=5000 \

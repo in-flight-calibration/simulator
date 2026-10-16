@@ -2,7 +2,9 @@
 #include "process.hpp"
 #include "video_node.hpp"
 
+#include <chrono>
 #include <rclcpp/rclcpp.hpp>
+#include <thread>
 #include <yaml-cpp/yaml.h>
 
 Process start_fgfs(const Camera &camera)
@@ -52,6 +54,7 @@ int main(int argc, char * argv[])
     }
 
     Process process = start_fgfs(camera);
+    std::this_thread::sleep_for(std::chrono::seconds(5)); // TODO: Wait for FlightGear to fully initialize
 
     auto flightgear_control_node = std::make_shared<FlightgearControlNode>(
         camera,
