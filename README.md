@@ -38,7 +38,7 @@ sudo docker run --rm -it --gpus all \
   flight_ros bash
 ```
 
-The host needs the NVIDIA Container Toolkit configured for Docker to use `--gpus all`. If it is not configured, remove `--gpus all`; the container will run without GPU access. For a GUI-free run, also omit the `DISPLAY` environment variable and X11 socket mount.
+The host needs the NVIDIA Container Toolkit configured for Docker to use `--gpus all`. If it is not configured, remove `--gpus all`; the container will run without GPU access. The complete simulation still requires the `DISPLAY` environment variable and X11 socket mount because it captures the FlightGear window.
 
 Inside the container, install ROS dependencies and build:
 
