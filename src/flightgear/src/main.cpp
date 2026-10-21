@@ -54,7 +54,7 @@ int main(int argc, char * argv[])
     }
 
     Process process = start_fgfs(camera);
-    std::this_thread::sleep_for(std::chrono::seconds(5)); // TODO: Wait for FlightGear to fully initialize
+    std::this_thread::sleep_for(std::chrono::seconds(10)); // TODO: Wait for FlightGear to fully initialize
 
     auto flightgear_control_node = std::make_shared<FlightgearControlNode>(
         camera,

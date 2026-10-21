@@ -48,4 +48,10 @@ private:
 
     rclcpp::TimerBase::SharedPtr _timer;
     image_transport::Publisher _image_pub;
+
+    std::atomic<std::uint64_t> _frames_received{0};
+    std::atomic<std::uint64_t> _frames_sent{0};
+    rclcpp::TimerBase::SharedPtr _stats_timer;
+
+    static constexpr float STATS_INTERVAL_SECONDS = 5;
 };

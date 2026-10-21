@@ -46,6 +46,23 @@ void VideoNode::run()
         return;
     }
 
+    _frames_received.store(0, std::memory_order_relaxed);
+    _stats_timer = create_wall_timer(
+        std::chrono::seconds(
+            static_cast<int>(std::round(STATS_INTERVAL_SECONDS))),
+        [this]() {
+            const auto captured = _frames_received.exchange(
+                0, std::memory_order_relaxed) / STATS_INTERVAL_SECONDS;
+            const auto sent = _frames_sent.exchange(
+                0, std::memory_order_relaxed) / STATS_INTERVAL_SECONDS;
+
+            RCLCPP_INFO(
+                get_logger(),
+                "Capture: %.2f, Sent: %.2f FPS",
+                static_cast<double>(captured),
+                static_cast<double>(sent));
+    });
+
     _running = true;
     _capture_thread = std::thread(
         &VideoNode::captureLoop,
@@ -75,6 +92,7 @@ bool VideoNode::openPipeline()
         "encoding-name=H264,"
         "payload=96 "
         << "! rtph264depay "
+        << "! h264parse "
         << "! avdec_h264 "
         << "! videoconvert "
         << "! appsink "
@@ -102,6 +120,8 @@ void VideoNode::captureLoop()
         if (!_cap.read(frame) || frame.empty()) {
             continue;
         }
+
+        _frames_received.fetch_add(1, std::memory_order_relaxed);
 
         {
             std::lock_guard<std::mutex> lock(_frame_mutex);
@@ -131,8 +151,7 @@ void VideoNode::update()
         std_msgs::msg::Header{},
         "bgr8",
         frame).toImageMsg();
-
     msg->header.stamp = now();
-
     _image_pub.publish(msg);
+    _frames_sent.fetch_add(1, std::memory_order_relaxed);
 }

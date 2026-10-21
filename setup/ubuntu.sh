@@ -3,7 +3,28 @@ set -e
 
 git submodule update --init --recursive
 
-sudo apt install -y libyaml-cpp-dev
+sudo apt install -y \
+    libyaml-cpp-dev \
+    xvfb \
+    x11-utils \
+    mesa-utils \
+    gstreamer1.0-tools \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav
+
+wget -q -O- https://packagecloud.io/dcommander/virtualgl/gpgkey |
+    gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/VirtualGL.gpg > /dev/null
+sudo wget -q -O /etc/apt/sources.list.d/VirtualGL.list \
+    https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list
+sudo apt update
+sudo apt install -y virtualgl
+
+if ! id -nG "$USER" | grep -qw render || ! id -nG "$USER" | grep -qw video; then
+    sudo usermod -aG render,video "$USER"
+    echo "Added $USER to render,video groups - log out and back in to apply"
+fi
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "Project directory: ${PROJECT_DIR}"
