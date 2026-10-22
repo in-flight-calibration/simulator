@@ -1,0 +1,31 @@
+name: simulator
+
+services:
+  simulator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: simulator:latest
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, graphics, utility]
+    volumes:
+      - ../config.yaml:/home/sim/config.yaml:ro
+      - fgfs:/home/sim/.fgfs
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "bash", "-c", "pgrep -x px4 && pgrep -x fgfs"]
+      interval: 10s
+      start_period: 300s
+
+volumes:
+  fgfs:
