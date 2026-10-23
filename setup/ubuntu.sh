@@ -4,7 +4,6 @@ set -e
 git submodule update --init --recursive
 
 sudo apt install -y \
-    libyaml-cpp-dev \
     xvfb \
     x11-utils \
     mesa-utils \

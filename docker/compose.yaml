@@ -24,8 +24,8 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD", "bash", "-c", "pgrep -x px4 && pgrep -x fgfs"]
-      interval: 10s
-      start_period: 300s
+      interval: 5s
+      start_period: 30s
 
 volumes:
   fgfs:

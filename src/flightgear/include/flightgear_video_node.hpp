@@ -7,7 +7,6 @@
 #include <opencv2/opencv.hpp>
 
 #include <atomic>
-#include <chrono>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -15,16 +14,12 @@
 
 #include "camera.hpp"
 
-class VideoNode : public rclcpp::Node
+class FlightgearVideoNode : public rclcpp::Node
 {
 public:
-    VideoNode(
-        const Camera& camera,
-        const std::string& topic,
-        std::uint16_t udp_port
-    );
+    explicit FlightgearVideoNode(const Camera& camera);
 
-    ~VideoNode() override;
+    ~FlightgearVideoNode() override;
 
     void run();
 
@@ -37,7 +32,10 @@ private:
 
     std::uint16_t _udp_port;
     std::string _topic;
-    std::chrono::milliseconds _update_interval;
+    std::string _multicast_group;
+    std::string _multicast_iface;
+    rclcpp::Duration _update_interval;
+    rclcpp::Duration _stats_interval;
 
     cv::VideoCapture _cap;
 
@@ -52,6 +50,4 @@ private:
     std::atomic<std::uint64_t> _frames_received{0};
     std::atomic<std::uint64_t> _frames_sent{0};
     rclcpp::TimerBase::SharedPtr _stats_timer;
-
-    static constexpr float STATS_INTERVAL_SECONDS = 5;
 };

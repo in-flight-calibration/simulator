@@ -20,14 +20,10 @@ def generate_launch_description():
         'px4.launch.py',
     )
 
-    config = LaunchConfiguration('config')
+    config = LaunchConfiguration('config', default='config.yaml')
     zenoh_router = LaunchConfiguration('zenoh_router')
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'config',
-            description='Path to the simulator configuration file',
-        ),
         DeclareLaunchArgument(
             'zenoh_router',
             default_value='true',
@@ -51,7 +47,7 @@ def generate_launch_description():
         Node(
             package='flightgear',
             executable='flightgear',
-            arguments=[config],
+            arguments=['--ros-args', '--params-file', config],
             output='screen',
         ),
     ])

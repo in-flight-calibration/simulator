@@ -5,18 +5,27 @@ FROM ros:${ROS_DISTRO}-ros-base
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# VirtualGL apt repository
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates gnupg wget \
     && wget -q -O- https://packagecloud.io/dcommander/virtualgl/gpgkey \
         | gpg --dearmor -o /etc/apt/trusted.gpg.d/VirtualGL.gpg \
     && wget -q -O /etc/apt/sources.list.d/VirtualGL.list \
         https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list \
-    && apt-get update \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build toolchain and libraries for PX4 and the ROS workspace
+RUN apt-get update \
     && apt-get install -y \
         build-essential ccache cmake file git make ninja-build rsync unzip zip \
         libssl-dev libxml2-dev libxml2-utils \
         python3-dev python3-pip python3-setuptools python3-wheel python3-yaml \
-        libopencv-dev libyaml-cpp-dev \
+        libopencv-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ROS packages used by the workspace
+RUN apt-get update \
+    && apt-get install -y \
         ros-${ROS_DISTRO}-cv-bridge \
         ros-${ROS_DISTRO}-compressed-image-transport \
         ros-${ROS_DISTRO}-geographic-msgs \
@@ -26,16 +35,32 @@ RUN apt-get update \
         ros-${ROS_DISTRO}-tf2-eigen \
         ros-${ROS_DISTRO}-tf2-geometry-msgs \
         ros-${ROS_DISTRO}-tf2-ros \
+    && rm -rf /var/lib/apt/lists/*
+
+# FlightGear and headless GPU rendering
+RUN apt-get update \
+    && apt-get install -y \
         flightgear xvfb x11-utils mesa-utils libegl1 virtualgl \
+    && rm -rf /var/lib/apt/lists/*
+
+# GStreamer video streaming
+RUN apt-get update \
+    && apt-get install -y \
         gstreamer1.0-tools \
         gstreamer1.0-plugins-base \
         gstreamer1.0-plugins-good \
         gstreamer1.0-plugins-bad \
         gstreamer1.0-plugins-ugly \
         gstreamer1.0-libav \
-        procps tini \
-    && rm -rf /var/lib/apt/lists/* \
-    && install -d -m 1777 /tmp/.X11-unix \
+    && rm -rf /var/lib/apt/lists/*
+
+# Runtime utilities
+RUN apt-get update \
+    && apt-get install -y procps tini \
+    && rm -rf /var/lib/apt/lists/*
+
+# Simulator user and X11 socket directory
+RUN install -d -m 1777 /tmp/.X11-unix \
     && useradd --create-home --shell /bin/bash sim \
     && install -d -o sim -g sim /home/sim/.fgfs
 

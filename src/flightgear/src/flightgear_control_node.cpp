@@ -4,21 +4,23 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <algorithm>
-#include <cmath>
 #include <stdexcept>
 
-FlightgearControlNode::FlightgearControlNode(
-    const Camera& camera,
-    const std::string& vehicle_attitude_topic,
-    const std::string& vehicle_global_position_topic,
-    std::uint16_t port)
-    : Node("flightgear_control_node"), _camera(camera), _port{port}, _interval{std::chrono::microseconds(1000000 / (2LL * camera.fps))}
+FlightgearControlNode::FlightgearControlNode(const Camera& camera)
+    : Node("flightgear_control_node"),
+      _camera(camera),
+      _port(static_cast<std::uint16_t>(declare_parameter("fg.port.control", 5500))),
+      _interval(rclcpp::Duration::from_seconds(1.0 / (2.0 * _camera.fps)))
 {
+    const auto vehicle_attitude_topic = declare_parameter(
+        "fg.control.attitude_topic", "/fmu/out/vehicle_attitude");
+    const auto vehicle_global_position_topic = declare_parameter(
+        "fg.control.position_topic", "/fmu/out/vehicle_global_position_groundtruth");
+
     _camera_orientation.setRPY(
-        camera.roll / RAD_TO_DEG,
-        camera.pitch / RAD_TO_DEG,
-        camera.yaw / RAD_TO_DEG
+        _camera.roll / RAD_TO_DEG,
+        _camera.pitch / RAD_TO_DEG,
+        _camera.yaw / RAD_TO_DEG
     );
 
     _att_sub =
@@ -51,7 +53,9 @@ void FlightgearControlNode::run()
         return;
     }
 
-    _timer = create_wall_timer(
+    _timer = rclcpp::create_timer(
+        this,
+        get_clock(),
         _interval,
         std::bind(&FlightgearControlNode::timerCallback, this)
     );
@@ -117,7 +121,7 @@ void FlightgearControlNode::globalPositionCallback(
     _packet.latitude = msg->lat;
     _packet.longitude = msg->lon;
     _packet.altitude_ft = msg->alt * M_TO_FT;
-    
+
     _packet_updated = true;
 }
 

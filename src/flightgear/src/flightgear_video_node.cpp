@@ -1,20 +1,20 @@
-#include "video_node.hpp"
+#include "flightgear_video_node.hpp"
 
 #include <cv_bridge/cv_bridge.hpp>
 
-#include <iostream>
-#include <sstream>
+#include <format>
 #include <utility>
 
-VideoNode::VideoNode(
-    const Camera& camera,
-    const std::string& topic,
-    std::uint16_t udp_port)
-    : Node("video_node"),
+FlightgearVideoNode::FlightgearVideoNode(const Camera& camera)
+    : Node("flightgear_video_node"),
       _camera(camera),
-      _udp_port(udp_port),
-      _topic(topic),
-      _update_interval(std::chrono::milliseconds(1000 / camera.fps))
+      _udp_port(static_cast<std::uint16_t>(declare_parameter("gst.multicast_port", 5501))),
+      _topic(declare_parameter("fg.image.fg_image_topic", "/flightgear/image")),
+      _multicast_group(declare_parameter("gst.multicast_group", "239.255.0.1")),
+      _multicast_iface(declare_parameter("gst.multicast_iface", "127.0.0.1")),
+      _update_interval(rclcpp::Duration::from_seconds(1.0 / _camera.fps)),
+      _stats_interval(rclcpp::Duration::from_seconds(
+          declare_parameter("fg.image.stats_interval", 5.0)))
 {
     _image_pub = image_transport::create_publisher(
         *this,
@@ -23,7 +23,7 @@ VideoNode::VideoNode(
     );
 }
 
-VideoNode::~VideoNode()
+FlightgearVideoNode::~FlightgearVideoNode()
 {
     _running = false;
 
@@ -36,7 +36,7 @@ VideoNode::~VideoNode()
     }
 }
 
-void VideoNode::run()
+void FlightgearVideoNode::run()
 {
     if (!openPipeline()) {
         RCLCPP_ERROR(
@@ -47,30 +47,34 @@ void VideoNode::run()
     }
 
     _frames_received.store(0, std::memory_order_relaxed);
-    _stats_timer = create_wall_timer(
-        std::chrono::seconds(
-            static_cast<int>(std::round(STATS_INTERVAL_SECONDS))),
-        [this]() {
+    const double stats_seconds = _stats_interval.seconds();
+    _stats_timer = rclcpp::create_timer(
+        this,
+        get_clock(),
+        _stats_interval,
+        [this, stats_seconds]() {
             const auto captured = _frames_received.exchange(
-                0, std::memory_order_relaxed) / STATS_INTERVAL_SECONDS;
+                0, std::memory_order_relaxed) / stats_seconds;
             const auto sent = _frames_sent.exchange(
-                0, std::memory_order_relaxed) / STATS_INTERVAL_SECONDS;
+                0, std::memory_order_relaxed) / stats_seconds;
 
             RCLCPP_INFO(
                 get_logger(),
                 "Capture: %.2f, Sent: %.2f FPS",
-                static_cast<double>(captured),
-                static_cast<double>(sent));
+                captured,
+                sent);
     });
 
     _running = true;
     _capture_thread = std::thread(
-        &VideoNode::captureLoop,
+        &FlightgearVideoNode::captureLoop,
         this);
 
-    _timer = create_wall_timer(
+    _timer = rclcpp::create_timer(
+        this,
+        get_clock(),
         _update_interval,
-        std::bind(&VideoNode::update, this));
+        std::bind(&FlightgearVideoNode::update, this));
 
     RCLCPP_INFO(
         get_logger(),
@@ -79,28 +83,28 @@ void VideoNode::run()
         _topic.c_str());
 }
 
-bool VideoNode::openPipeline()
+bool FlightgearVideoNode::openPipeline()
 {
-    std::ostringstream pipeline;
-
-    pipeline
-        << "udpsrc multicast-group=239.255.0.1 "
+    const auto pipeline_string = std::format(
+        "udpsrc multicast-group={} "
         "auto-multicast=true "
-        << "port=" << _udp_port
-        << " ! application/x-rtp,"
+        "multicast-iface={} "
+        "port={} "
+        "! application/x-rtp,"
         "media=video,"
         "encoding-name=H264,"
         "payload=96 "
-        << "! rtph264depay "
-        << "! h264parse "
-        << "! avdec_h264 "
-        << "! videoconvert "
-        << "! appsink "
+        "! rtph264depay "
+        "! h264parse "
+        "! avdec_h264 "
+        "! videoconvert "
+        "! appsink "
         "sync=false "
         "drop=true "
-        "max-buffers=1";
-
-    const auto pipeline_string = pipeline.str();
+        "max-buffers=1",
+        _multicast_group,
+        _multicast_iface,
+        _udp_port);
 
     RCLCPP_INFO(
         get_logger(),
@@ -112,7 +116,7 @@ bool VideoNode::openPipeline()
         cv::CAP_GSTREAMER);
 }
 
-void VideoNode::captureLoop()
+void FlightgearVideoNode::captureLoop()
 {
     while (_running && rclcpp::ok()) {
         cv::Mat frame;
@@ -130,7 +134,7 @@ void VideoNode::captureLoop()
     }
 }
 
-void VideoNode::update()
+void FlightgearVideoNode::update()
 {
     cv::Mat frame;
 

@@ -23,13 +23,13 @@ find_package(tf2 REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(yaml-cpp REQUIRED)
 
 add_executable(flightgear 
     src/main.cpp
     src/flightgear_control_node.cpp
+    src/flightgear_process_node.cpp
+    src/flightgear_video_node.cpp
     src/process.cpp
-    src/video_node.cpp
 )
 
 target_include_directories(flightgear PUBLIC
@@ -50,7 +50,6 @@ target_link_libraries(flightgear
     tf2_eigen::tf2_eigen
     tf2_geometry_msgs::tf2_geometry_msgs
     tf2_ros::tf2_ros
-    yaml-cpp::yaml-cpp
     ${OpenCV_LIBS}
 )
 

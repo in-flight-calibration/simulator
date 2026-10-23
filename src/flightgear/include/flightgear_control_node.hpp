@@ -4,7 +4,6 @@
 #include <px4_msgs/msg/vehicle_attitude.hpp>
 #include <px4_msgs/msg/vehicle_global_position.hpp>
 
-#include <chrono>
 #include <cstdint>
 #include <netinet/in.h>
 #include <string>
@@ -19,12 +18,7 @@
 class FlightgearControlNode : public rclcpp::Node
 {
 public:
-    FlightgearControlNode(
-        const Camera& camera,
-        const std::string& vehicle_attitude_topic,
-        const std::string& vehicle_global_position_topic,
-        std::uint16_t port
-    );
+    explicit FlightgearControlNode(const Camera& camera);
 
     ~FlightgearControlNode() override;
 
@@ -33,7 +27,7 @@ public:
 private:
     const Camera& _camera;
     std::uint16_t _port;
-    std::chrono::microseconds _interval;
+    rclcpp::Duration _interval;
     tf2::Quaternion _camera_orientation;
 
     int _socket{-1};

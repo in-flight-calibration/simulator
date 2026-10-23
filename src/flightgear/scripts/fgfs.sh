@@ -9,6 +9,9 @@ FGFS_PORT_CONTROL="${FGFS_PORT_CONTROL:-5500}"
 FGFS_PORT_VIDEO="${FGFS_PORT_VIDEO:-5501}"
 FGFS_PORT_PROPS="${FGFS_PORT_PROPS:-5502}"
 
+FGFS_MULTICAST_GROUP="${FGFS_MULTICAST_GROUP:-239.255.0.1}"
+FGFS_MULTICAST_IFACE="${FGFS_MULTICAST_IFACE:-127.0.0.1}"
+
 # 1 = render on a hidden Xvfb display, 0 = visible window on the current desktop
 FGFS_HEADLESS="${FGFS_HEADLESS:-1}"
 # VirtualGL device: egl, eglN or /dev/dri/cardN (see /opt/VirtualGL/bin/eglinfo -e)
@@ -165,9 +168,10 @@ start_gstreamer() {
             qp-min=18 \
             qp-max=30 ! \
         rtph264pay config-interval=-1 pt=96 ! \
-        udpsink host=239.255.0.1 \
+        udpsink host="$FGFS_MULTICAST_GROUP" \
             port="$FGFS_PORT_VIDEO" \
             auto-multicast=true \
+            multicast-iface="$FGFS_MULTICAST_IFACE" \
             sync=false \
             async=false \
         >> "$GSTREAMER_LOG_FILE" 2>&1 &
