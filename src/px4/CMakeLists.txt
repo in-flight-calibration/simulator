@@ -13,28 +13,13 @@ if(NOT EXISTS "${PX4_SOURCE_DIR}/Makefile")
     )
 endif()
 
-set(PX4_ZENOH_DIR "${PX4_SOURCE_DIR}/src/modules/zenoh")
-
-set(PX4_DDS_TOPICS_FILE "$ENV{DDS_TOPICS_FILE}")
-if(PX4_DDS_TOPICS_FILE STREQUAL "")
-    set(PX4_DDS_TOPICS_FILE "ifc_dds_topics.yaml")
+if("$ENV{PX4_CMD}" STREQUAL "")
+    message(FATAL_ERROR "PX4_CMD is not set (see .env)")
 endif()
-set(PX4_DDS_TOPICS_PATH "${PX4_DDS_TOPICS_FILE}")
-if(NOT IS_ABSOLUTE "${PX4_DDS_TOPICS_FILE}")
-    set(PX4_DDS_TOPICS_PATH "${PX4_ZENOH_DIR}/${PX4_DDS_TOPICS_FILE}")
-endif()
-if(NOT EXISTS "${PX4_DDS_TOPICS_PATH}")
-    message(FATAL_ERROR "DDS topics file not found: ${PX4_DDS_TOPICS_PATH}")
-endif()
-
-set(PX4_MAKE_ARGS
-    px4_sitl_zenoh
-    "CMAKE_ARGS=-DDDS_TOPICS_FILE=${PX4_DDS_TOPICS_FILE}"
-)
+separate_arguments(PX4_CMD_ARGS UNIX_COMMAND "$ENV{PX4_CMD}")
 
 add_custom_target(px4_sitl ALL
-    COMMAND "${MAKE_EXECUTABLE}"
-            ${PX4_MAKE_ARGS}
+    COMMAND ${PX4_CMD_ARGS}
     WORKING_DIRECTORY "${PX4_SOURCE_DIR}"
     USES_TERMINAL
     VERBATIM

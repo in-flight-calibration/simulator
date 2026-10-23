@@ -34,7 +34,7 @@ The latest QGroundControl AppImage is downloaded with setup script.
 
 The image runs PX4 SITL, FlightGear (headless Xvfb) and the ROS bridge on the host network. It does not start a Zenoh router: PX4 and the ROS nodes connect to the router on the host at `localhost:7447`, so host ROS 2 applications see the simulator topics directly. Because the network is shared, PX4 MAVLink and FlightGear ports are the same as in a native run; do not run the native simulator at the same time.
 
-Initialize submodules first (`git submodule update --init --recursive`); the image copies the PX4 checkout and its git metadata, but not `.env` or the host `build/`, `install/` and `log/` directories.
+Initialize submodules first (`git submodule update --init --recursive`); the image copies the PX4 checkout and its git metadata and `.env` (the same variables as the native run; rebuild the image after changing it), but not the host `build/`, `install/` and `log/` directories.
 
 ### Host router
 

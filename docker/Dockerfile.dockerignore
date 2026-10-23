@@ -1,5 +1,6 @@
 *
 !.git/modules/src/px4/
+!.env
 !config.yaml
 !docker/
 !src/flightgear/

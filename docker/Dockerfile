@@ -73,11 +73,8 @@ WORKDIR /home/sim/ws
 # /usr/games holds fgfs; no D-Bus bus in the container, so keep libdbus from aborting fgfs
 ENV PATH=/home/sim/.local/bin:${PATH}:/usr/games \
     DBUS_FATAL_WARNINGS=0 \
-    PX4_DIR=/home/sim/ws/src/px4/PX4-Autopilot \
-    DDS_TOPICS_FILE=ifc_dds_topics.yaml \
     GIT_SUBMODULES_ARE_EVIL=1 \
-    CCACHE_DISABLE=1 \
-    RMW_IMPLEMENTATION=rmw_zenoh_cpp
+    CCACHE_DISABLE=1
 
 # Same per-user install as PX4's ubuntu.sh, leaving the ROS Python packages untouched
 COPY --chown=sim:sim src/px4/PX4-Autopilot/Tools/setup/requirements.txt /tmp/px4-requirements.txt
@@ -86,7 +83,9 @@ RUN pip3 install --user --break-system-packages --no-cache-dir -r /tmp/px4-requi
 # PX4 needs its git metadata to generate the version header
 COPY --chown=sim:sim .git/modules/src/px4 .git/modules/src/px4
 COPY --chown=sim:sim src/px4/PX4-Autopilot src/px4/PX4-Autopilot
-RUN make -C "$PX4_DIR" px4_sitl_zenoh "CMAKE_ARGS=-DDDS_TOPICS_FILE=${DDS_TOPICS_FILE}"
+# Same .env as the native run (relative PX4_DIR resolves from the workspace root)
+COPY --chown=sim:sim .env .env
+RUN set -a && source .env && set +a && cd "$PX4_DIR" && $PX4_CMD
 
 COPY --chown=sim:sim src/px4/CMakeLists.txt src/px4/package.xml src/px4/
 COPY --chown=sim:sim src/px4/launch src/px4/launch
@@ -94,7 +93,9 @@ COPY --chown=sim:sim src/px4_msgs src/px4_msgs
 COPY --chown=sim:sim src/ifc_msgs src/ifc_msgs
 COPY --chown=sim:sim src/flightgear src/flightgear
 COPY --chown=sim:sim src/simulator src/simulator
-RUN source "/opt/ros/${ROS_DISTRO}/setup.bash" && colcon build --base-paths src
+RUN set -a && source .env && set +a \
+    && source "/opt/ros/${ROS_DISTRO}/setup.bash" \
+    && colcon build --base-paths src
 
 COPY --chown=sim:sim config.yaml /home/sim/config.yaml
 
