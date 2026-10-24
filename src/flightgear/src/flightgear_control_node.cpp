@@ -135,7 +135,7 @@ void FlightgearControlNode::timerCallback()
 
     _initialized = _initialized || (_att_updated && _vgp_updated);
 
-    if (_socket < 0 || !_initialized || !_att_updated || !_vgp_updated) {
+    if (_socket < 0 || !_initialized || (!_att_updated && !_vgp_updated)) {
         return;
     }
 
