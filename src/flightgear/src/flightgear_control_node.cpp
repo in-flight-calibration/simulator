@@ -4,27 +4,40 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <algorithm>
-#include <cmath>
 #include <stdexcept>
 
-#include <tf2_eigen/tf2_eigen.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <tf2/LinearMath/Quaternion.hpp>
-#include <tf2/LinearMath/Matrix3x3.hpp>
-
-FlightgearControlNode::FlightgearControlNode(
-    const std::string& groundtruth_topic,
-    std::uint16_t port,
-    std::chrono::microseconds interval)
-    : Node("flightgear_control_node"), _port{port}, _interval{interval}
+FlightgearControlNode::FlightgearControlNode(const Camera& camera)
+    : Node("flightgear_control_node"),
+      _camera(camera),
+      _port(static_cast<std::uint16_t>(declare_parameter("fg.port.control", 5500))),
+      _interval(rclcpp::Duration::from_seconds(1.0 / (2.0 * _camera.fps)))
 {
-    _groundtruth_sub =
-        create_subscription<aircraft_msgs::msg::Groundtruth>(
-            groundtruth_topic,
+    const auto vehicle_attitude_topic = declare_parameter(
+        "fg.control.attitude_topic", "/fmu/out/vehicle_attitude");
+    const auto vehicle_global_position_topic = declare_parameter(
+        "fg.control.position_topic", "/fmu/out/vehicle_global_position_groundtruth");
+
+    _camera_orientation.setRPY(
+        _camera.roll / RAD_TO_DEG,
+        _camera.pitch / RAD_TO_DEG,
+        _camera.yaw / RAD_TO_DEG
+    );
+
+    _att_sub =
+        create_subscription<px4_msgs::msg::VehicleAttitude>(
+            vehicle_attitude_topic,
             rclcpp::SensorDataQoS(),
             std::bind(
-                &FlightgearControlNode::groundtruthCallback,
+                &FlightgearControlNode::attitudeCallback,
+                this,
+                std::placeholders::_1));
+
+    _vgp_sub =
+        create_subscription<px4_msgs::msg::VehicleGlobalPosition>(
+            vehicle_global_position_topic,
+            rclcpp::SensorDataQoS(),
+            std::bind(
+                &FlightgearControlNode::globalPositionCallback,
                 this,
                 std::placeholders::_1));
 }
@@ -40,7 +53,9 @@ void FlightgearControlNode::run()
         return;
     }
 
-    _timer = create_wall_timer(
+    _timer = rclcpp::create_timer(
+        this,
+        get_clock(),
         _interval,
         std::bind(&FlightgearControlNode::timerCallback, this)
     );
@@ -85,27 +100,42 @@ bool FlightgearControlNode::closeSocket()
     return false;
 }
 
-void FlightgearControlNode::groundtruthCallback(
-    const aircraft_msgs::msg::Groundtruth::SharedPtr msg)
+void FlightgearControlNode::attitudeCallback(
+    const px4_msgs::msg::VehicleAttitude::SharedPtr msg)
 {
-    _packet.latitude = msg->latitude;
-    _packet.longitude = msg->longitude;
-    _packet.altitude_ft = msg->altitude * M_TO_FT;
-    
-    tf2::Quaternion q;
+    tf2::Quaternion q
+        {msg->q[1], msg->q[2], msg->q[3], msg->q[0]};
     double roll, pitch, yaw;
-    tf2::fromMsg(msg->orientation, q);
-    tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+    tf2::Matrix3x3(q * _camera_orientation).getRPY(roll, pitch, yaw);
+
+    std::lock_guard<std::mutex> lock(_mutex);
 
     _packet.roll_deg = roll * RAD_TO_DEG;
     _packet.pitch_deg = pitch * RAD_TO_DEG;
     _packet.heading_deg = yaw * RAD_TO_DEG;
-    _packet_updated = true;
+
+    _att_updated = true;
+}
+
+void FlightgearControlNode::globalPositionCallback(
+    const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    _packet.latitude = msg->lat;
+    _packet.longitude = msg->lon;
+    _packet.altitude_ft = msg->alt * M_TO_FT;
+
+    _vgp_updated = true;
 }
 
 void FlightgearControlNode::timerCallback()
 {
-    if (_socket < 0 || !_packet_updated) {
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    _initialized = _initialized || (_att_updated && _vgp_updated);
+
+    if (_socket < 0 || !_initialized || (!_att_updated && !_vgp_updated)) {
         return;
     }
 
@@ -116,6 +146,7 @@ void FlightgearControlNode::timerCallback()
         0,
         reinterpret_cast<const sockaddr*>(&_destination),
         sizeof(_destination));
-
-    _packet_updated = false;
+        
+    _att_updated = false;
+    _vgp_updated = false;
 }

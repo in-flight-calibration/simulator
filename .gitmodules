@@ -1,0 +1,9 @@
+[submodule "src/px4/PX4-Autopilot"]
+	path = src/px4/PX4-Autopilot
+	url = git@github.com:in-flight-calibration/PX4-Autopilot.git
+[submodule "src/ifc_msgs"]
+	path = src/ifc_msgs
+	url = git@github.com:in-flight-calibration/ifc_msgs.git
+[submodule "src/px4_msgs"]
+	path = src/px4_msgs
+	url = git@github.com:in-flight-calibration/px4_msgs.git

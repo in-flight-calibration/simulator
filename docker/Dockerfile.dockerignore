@@ -1,0 +1,14 @@
+*
+!.git/modules/src/px4/
+!.env
+!config.yaml
+!docker/
+!src/flightgear/
+!src/ifc_msgs/
+!src/px4/
+!src/px4_msgs/
+!src/simulator/
+
+**/__pycache__/
+src/px4/PX4-Autopilot/build/
+src/px4/PX4-Autopilot/src/drivers/uavcan/libdronecan/libuavcan/include/dsdlc_generated/

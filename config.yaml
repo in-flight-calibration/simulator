@@ -1,0 +1,26 @@
+/**:
+  ros__parameters:
+    camera:
+      width: 1280
+      height: 720
+      fps: 30
+      fov: 75.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+
+    fg:
+      control:
+        attitude_topic: "/fmu/out/vehicle_attitude"
+        position_topic: "/fmu/out/vehicle_global_position_groundtruth"
+        startup_delay: 10.0
+      image:
+        stats_interval: 5.0
+        fg_image_topic: "/flightgear/image"
+      port:
+        control: 5500
+
+    gst:
+      multicast_group: "239.255.0.1"
+      multicast_iface: "lo"
+      multicast_port: 5501

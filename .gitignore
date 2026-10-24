@@ -26,3 +26,5 @@ Makefile
 PlotJuggler/
 plotjuggler_msgs/
 plotjuggler-ros-plugins/
+
+QGroundControl*
