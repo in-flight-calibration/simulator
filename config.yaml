@@ -19,9 +19,8 @@
         fg_image_topic: "/flightgear/image"
       port:
         control: 5500
-        props: 5502
 
     gst:
       multicast_group: "239.255.0.1"
-      multicast_iface: "127.0.0.1"
+      multicast_iface: "lo"
       multicast_port: 5501

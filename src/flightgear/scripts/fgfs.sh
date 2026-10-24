@@ -7,10 +7,9 @@ FGFS_FPS="${FGFS_FPS:-30}"
 
 FGFS_PORT_CONTROL="${FGFS_PORT_CONTROL:-5500}"
 FGFS_PORT_VIDEO="${FGFS_PORT_VIDEO:-5501}"
-FGFS_PORT_PROPS="${FGFS_PORT_PROPS:-5502}"
 
 FGFS_MULTICAST_GROUP="${FGFS_MULTICAST_GROUP:-239.255.0.1}"
-FGFS_MULTICAST_IFACE="${FGFS_MULTICAST_IFACE:-127.0.0.1}"
+FGFS_MULTICAST_IFACE="${FGFS_MULTICAST_IFACE:-lo}"
 
 # 1 = render on a hidden Xvfb display, 0 = visible window on the current desktop
 FGFS_HEADLESS="${FGFS_HEADLESS:-1}"
@@ -109,7 +108,6 @@ fi
     --log-level=info \
     --airport=EPBC --runway=28L \
     --generic=socket,in,$((2 * FGFS_FPS)),,"$FGFS_PORT_CONTROL",udp,control \
-    --telnet="$FGFS_PORT_PROPS" \
     --fdm=null \
     --aircraft=uav \
     --timeofday=noon \

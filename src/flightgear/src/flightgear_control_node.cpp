@@ -108,26 +108,34 @@ void FlightgearControlNode::attitudeCallback(
     double roll, pitch, yaw;
     tf2::Matrix3x3(q * _camera_orientation).getRPY(roll, pitch, yaw);
 
+    std::lock_guard<std::mutex> lock(_mutex);
+
     _packet.roll_deg = roll * RAD_TO_DEG;
     _packet.pitch_deg = pitch * RAD_TO_DEG;
     _packet.heading_deg = yaw * RAD_TO_DEG;
 
-    _packet_updated = true;
+    _att_updated = true;
 }
 
 void FlightgearControlNode::globalPositionCallback(
     const px4_msgs::msg::VehicleGlobalPosition::SharedPtr msg)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+
     _packet.latitude = msg->lat;
     _packet.longitude = msg->lon;
     _packet.altitude_ft = msg->alt * M_TO_FT;
 
-    _packet_updated = true;
+    _vgp_updated = true;
 }
 
 void FlightgearControlNode::timerCallback()
 {
-    if (_socket < 0 || !_packet_updated) {
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    _initialized = _initialized || (_att_updated && _vgp_updated);
+
+    if (_socket < 0 || !_initialized || !_att_updated || !_vgp_updated) {
         return;
     }
 
@@ -138,6 +146,7 @@ void FlightgearControlNode::timerCallback()
         0,
         reinterpret_cast<const sockaddr*>(&_destination),
         sizeof(_destination));
-
-    _packet_updated = false;
+        
+    _att_updated = false;
+    _vgp_updated = false;
 }

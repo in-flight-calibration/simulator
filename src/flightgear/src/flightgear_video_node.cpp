@@ -11,7 +11,7 @@ FlightgearVideoNode::FlightgearVideoNode(const Camera& camera)
       _udp_port(static_cast<std::uint16_t>(declare_parameter("gst.multicast_port", 5501))),
       _topic(declare_parameter("fg.image.fg_image_topic", "/flightgear/image")),
       _multicast_group(declare_parameter("gst.multicast_group", "239.255.0.1")),
-      _multicast_iface(declare_parameter("gst.multicast_iface", "127.0.0.1")),
+      _multicast_iface(declare_parameter("gst.multicast_iface", "lo")),
       _update_interval(rclcpp::Duration::from_seconds(1.0 / _camera.fps)),
       _stats_interval(rclcpp::Duration::from_seconds(
           declare_parameter("fg.image.stats_interval", 5.0)))

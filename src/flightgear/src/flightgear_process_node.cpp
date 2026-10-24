@@ -30,9 +30,8 @@ FlightgearProcessNode::FlightgearProcessNode()
       _camera(declareCamera(*this)),
       _port_control(static_cast<int>(declare_parameter("fg.port.control", 5500))),
       _port_video(static_cast<int>(declare_parameter("gst.multicast_port", 5501))),
-      _port_props(static_cast<int>(declare_parameter("fg.port.props", 5502))),
       _multicast_group(declare_parameter("gst.multicast_group", "239.255.0.1")),
-      _multicast_iface(declare_parameter("gst.multicast_iface", "127.0.0.1")),
+      _multicast_iface(declare_parameter("gst.multicast_iface", "lo")),
       _startup_delay(rclcpp::Duration::from_seconds(
           declare_parameter("fg.control.startup_delay", 10.0)))
 {
@@ -52,7 +51,6 @@ void FlightgearProcessNode::run()
         {"FGFS_FPS", std::to_string(_camera.fps)},
         {"FGFS_PORT_CONTROL", std::to_string(_port_control)},
         {"FGFS_PORT_VIDEO", std::to_string(_port_video)},
-        {"FGFS_PORT_PROPS", std::to_string(_port_props)},
         {"FGFS_MULTICAST_GROUP", _multicast_group},
         {"FGFS_MULTICAST_IFACE", _multicast_iface}
     };

@@ -21,7 +21,6 @@ private:
     Camera _camera;
     int _port_control;
     int _port_video;
-    int _port_props;
     std::string _multicast_group;
     std::string _multicast_iface;
     rclcpp::Duration _startup_delay;

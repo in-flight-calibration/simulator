@@ -5,6 +5,7 @@
 #include <px4_msgs/msg/vehicle_global_position.hpp>
 
 #include <cstdint>
+#include <mutex>
 #include <netinet/in.h>
 #include <string>
 
@@ -48,7 +49,11 @@ private:
         double heading_deg;
     } _packet;
 
-    bool _packet_updated{false};
+    bool _initialized{false};
+    bool _att_updated{false};
+    bool _vgp_updated{false};
+
+    std::mutex _mutex;
 
     bool openSocket();
     bool closeSocket();
