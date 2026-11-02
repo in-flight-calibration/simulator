@@ -163,17 +163,17 @@ start_gstreamer() {
     videoconvert ! \
     videorate ! \
     video/x-raw,framerate="$FGFS_FPS"/1 ! \
-    queue max-size-time="$FGFS_VIDEO_QUEUE_NS" \
-        max-size-buffers=0 \
-        max-size-bytes=0 ! \
-    identity sync=true \
-        ts-offset="$FGFS_VIDEO_DELAY_NS" ! \
     x264enc tune=zerolatency \
         speed-preset=medium \
         bitrate=5000 \
         key-int-max="$FGFS_FPS" \
         qp-min=18 \
         qp-max=30 ! \
+    queue max-size-time="$FGFS_VIDEO_QUEUE_NS" \
+        max-size-buffers=0 \
+        max-size-bytes=0 ! \
+    identity sync=true \
+        ts-offset="$FGFS_VIDEO_DELAY_NS" ! \
     rtph264pay config-interval=-1 pt=96 ! \
     udpsink host="$FGFS_MULTICAST_GROUP" \
         port="$FGFS_PORT_VIDEO" \
