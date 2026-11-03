@@ -10,12 +10,24 @@ export RMW_IMPLEMENTATION=rmw_zenoh_cpp
 source /opt/ros/$(ls /opt/ros | sort -V | tail -n 1)/setup.bash 
 source install/setup.bash
 
-ros2 run rmw_zenoh_cpp rmw_zenohd &
-zenoh_pid=$!
-cleanup() {
-	kill "$zenoh_pid" 2>/dev/null || true
-	wait "$zenoh_pid" 2>/dev/null || true
-}
-trap cleanup EXIT INT TERM
+zenoh_pid=
+play_pid=
 
-ros2 bag play "$1" --loop
+cleanup() {
+	trap - EXIT INT TERM
+	for pid in "$play_pid" "$zenoh_pid"; do
+		[[ -n "$pid" ]] || continue
+		kill "$pid" 2>/dev/null || true
+		wait "$pid" 2>/dev/null || true
+	done
+}
+
+trap cleanup EXIT
+trap 'exit 1' TERM INT
+
+"$(ros2 pkg prefix rmw_zenoh_cpp)/lib/rmw_zenoh_cpp/rmw_zenohd" &
+zenoh_pid=$!
+
+ros2 bag play "$1" --loop &
+play_pid=$!
+wait "$play_pid"
