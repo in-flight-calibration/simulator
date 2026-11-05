@@ -23,6 +23,7 @@ private:
     int _port_video;
     std::string _multicast_group;
     std::string _multicast_iface;
+    int _video_delay;
     rclcpp::Duration _startup_delay;
 
     Process _process;
