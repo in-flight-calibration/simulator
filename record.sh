@@ -10,6 +10,7 @@ mkdir -p records
 
 ros2 bag record \
   -o "records/$(date +%Y%m%d_%H:%M:%S)" \
+  --topics \
   /flightgear/image/compressed \
   /fmu/out/airspeed_validated \
   /fmu/out/sensor_combined \
