@@ -11,6 +11,10 @@ FGFS_PORT_VIDEO="${FGFS_PORT_VIDEO:-5501}"
 FGFS_MULTICAST_GROUP="${FGFS_MULTICAST_GROUP:-239.255.0.1}"
 FGFS_MULTICAST_IFACE="${FGFS_MULTICAST_IFACE:-lo}"
 
+FGFS_VIDEO_DELAY_MS=${FGFS_VIDEO_DELAY_MS:-0}
+FGFS_VIDEO_DELAY_NS=$((FGFS_VIDEO_DELAY_MS * 1000000))
+FGFS_VIDEO_QUEUE_NS=$((FGFS_VIDEO_DELAY_NS + 1000000000))
+
 # 1 = render on a hidden Xvfb display, 0 = visible window on the current desktop
 FGFS_HEADLESS="${FGFS_HEADLESS:-1}"
 # VirtualGL device: egl, eglN or /dev/dri/cardN (see /opt/VirtualGL/bin/eglinfo -e)
@@ -152,27 +156,32 @@ echo "FlightGear Window ID: $FLIGHTGEAR_XID"
 
 start_gstreamer() {
     gst-launch-1.0 -q \
-        ximagesrc display-name="$DISPLAY" \
+    ximagesrc display-name="$DISPLAY" \
         xid="$FLIGHTGEAR_XID" \
         show-pointer=false \
         use-damage=false ! \
-        videoconvert ! \
-        videorate ! \
-        video/x-raw,framerate="$FGFS_FPS"/1 ! \
-        x264enc tune=zerolatency \
-            speed-preset=medium \
-            bitrate=5000 \
-            key-int-max="$FGFS_FPS" \
-            qp-min=18 \
-            qp-max=30 ! \
-        rtph264pay config-interval=-1 pt=96 ! \
-        udpsink host="$FGFS_MULTICAST_GROUP" \
-            port="$FGFS_PORT_VIDEO" \
-            auto-multicast=true \
-            multicast-iface="$FGFS_MULTICAST_IFACE" \
-            sync=false \
-            async=false \
-        >> "$GSTREAMER_LOG_FILE" 2>&1 &
+    videoconvert ! \
+    videorate ! \
+    video/x-raw,framerate="$FGFS_FPS"/1 ! \
+    x264enc tune=zerolatency \
+        speed-preset=medium \
+        bitrate=5000 \
+        key-int-max="$FGFS_FPS" \
+        qp-min=18 \
+        qp-max=30 ! \
+    queue max-size-time="$FGFS_VIDEO_QUEUE_NS" \
+        max-size-buffers=0 \
+        max-size-bytes=0 ! \
+    identity sync=true \
+        ts-offset="$FGFS_VIDEO_DELAY_NS" ! \
+    rtph264pay config-interval=-1 pt=96 ! \
+    udpsink host="$FGFS_MULTICAST_GROUP" \
+        port="$FGFS_PORT_VIDEO" \
+        auto-multicast=true \
+        multicast-iface="$FGFS_MULTICAST_IFACE" \
+        sync=false \
+        async=false \
+    >> "$GSTREAMER_LOG_FILE" 2>&1 &
 
     GSTREAMER_PID=$!
     echo "$GSTREAMER_PID" > "$GSTREAMER_PID_FILE"
