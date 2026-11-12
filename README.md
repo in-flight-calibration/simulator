@@ -30,6 +30,20 @@ Ubuntu:
 To control the simulator use any Ground Control station: QGroundControl, Mission Planner. ApmPlanner etc.
 The latest QGroundControl AppImage is downloaded with setup script.
 
+### Record and replay
+
+While the simulator is running, record the camera image and PX4 output topics into a rosbag:
+```
+./record.sh [output_path]
+```
+Without an argument the bag is saved to `records/<YYYYmmdd_HH:MM:SS>` next to the script. Pass `output_path` to override it.
+
+To replay a recording (looped) run:
+```
+./replay.sh <record>
+```
+It starts its own Zenoh router, so stop the simulator first.
+
 ## Docker
 
 The image runs PX4 SITL, FlightGear (headless Xvfb) and the ROS bridge on the host network. It does not start a Zenoh router: PX4 and the ROS nodes connect to the router on the host at `localhost:7447`, so host ROS 2 applications see the simulator topics directly. Because the network is shared, PX4 MAVLink and FlightGear ports are the same as in a native run; do not run the native simulator at the same time.
