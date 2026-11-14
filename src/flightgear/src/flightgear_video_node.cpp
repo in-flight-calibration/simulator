@@ -1,8 +1,9 @@
 #include "flightgear_video_node.hpp"
 
 #include <cv_bridge/cv_bridge.hpp>
+#include <image_transport/image_transport.hpp>
+#include <image_transport/version.h>
 
-#include <format>
 #include <utility>
 
 FlightgearVideoNode::FlightgearVideoNode(const Camera& camera)
@@ -16,11 +17,17 @@ FlightgearVideoNode::FlightgearVideoNode(const Camera& camera)
       _stats_interval(rclcpp::Duration::from_seconds(
           declare_parameter("fg.image.stats_interval", 5.0)))
 {
+
+#if IMAGE_TRANSPORT_VERSION_MAJOR > 6 || (IMAGE_TRANSPORT_VERSION_MAJOR == 6 && IMAGE_TRANSPORT_VERSION_MINOR >= 4)
     _image_pub = image_transport::create_publisher(
-        *this,
-        _topic,
-        rclcpp::SensorDataQoS()
+        *this,_topic, rclcpp::SensorDataQoS()
     );
+#else
+    _image_pub = image_transport::create_publisher(
+        this,_topic, rclcpp::SensorDataQoS().get_rmw_qos_profile()
+    );
+#endif
+
 }
 
 FlightgearVideoNode::~FlightgearVideoNode()
