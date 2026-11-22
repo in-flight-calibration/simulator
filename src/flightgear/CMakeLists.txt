@@ -26,6 +26,7 @@ find_package(tf2_ros REQUIRED)
 
 add_executable(flightgear 
     src/main.cpp
+    src/camera.cpp
     src/flightgear_control_node.cpp
     src/flightgear_process_node.cpp
     src/flightgear_video_node.cpp

@@ -13,7 +13,7 @@ FlightgearVideoNode::FlightgearVideoNode(const Camera& camera)
       _topic(declare_parameter("fg.image.fg_image_topic", "/flightgear/image")),
       _multicast_group(declare_parameter("gst.multicast_group", "239.255.0.1")),
       _multicast_iface(declare_parameter("gst.multicast_iface", "lo")),
-      _update_interval(rclcpp::Duration::from_seconds(1.0 / _camera.fps)),
+      _update_interval(rclcpp::Duration::from_seconds(1.0 / _camera.getFps())),
       _stats_interval(rclcpp::Duration::from_seconds(
           declare_parameter("fg.image.stats_interval", 5.0)))
 {
@@ -152,16 +152,20 @@ void FlightgearVideoNode::update()
             return;
         }
 
-        cv::resize(
-            _latest_frame,
-            frame,
-            cv::Size(_camera.width, _camera.height));
+        frame = _latest_frame;
     }
+
+    if (frame.size() != _camera.getRenderSize()) {
+        cv::resize(frame, frame, _camera.getRenderSize());
+    }
+    
+    cv::Mat output;
+    cv::remap(frame, output, _camera.getPixelMap(), cv::noArray(), cv::INTER_LINEAR);
 
     auto msg = cv_bridge::CvImage(
         std_msgs::msg::Header{},
         "bgr8",
-        frame).toImageMsg();
+        output).toImageMsg();
     msg->header.stamp = now();
     _image_pub.publish(msg);
     _frames_sent.fetch_add(1, std::memory_order_relaxed);
