@@ -10,7 +10,7 @@ FlightgearControlNode::FlightgearControlNode(const Camera& camera)
     : Node("flightgear_control_node"),
       _camera(camera),
       _port(static_cast<std::uint16_t>(declare_parameter("fg.port.control", 5500))),
-      _interval(rclcpp::Duration::from_seconds(1.0 / (2.0 * _camera.fps)))
+      _interval(rclcpp::Duration::from_seconds(1.0 / (2.0 * _camera.getFps())))
 {
     const auto vehicle_attitude_topic = declare_parameter(
         "fg.control.attitude_topic", "/fmu/out/vehicle_attitude");
@@ -18,9 +18,9 @@ FlightgearControlNode::FlightgearControlNode(const Camera& camera)
         "fg.control.position_topic", "/fmu/out/vehicle_global_position_groundtruth");
 
     _camera_orientation.setRPY(
-        _camera.roll / RAD_TO_DEG,
-        _camera.pitch / RAD_TO_DEG,
-        _camera.yaw / RAD_TO_DEG
+        _camera.getRoll() / RAD_TO_DEG,
+        _camera.getPitch() / RAD_TO_DEG,
+        _camera.getYaw() / RAD_TO_DEG
     );
 
     _att_sub =

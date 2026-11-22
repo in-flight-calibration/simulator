@@ -9,8 +9,8 @@ int main(int argc, char * argv[])
     rclcpp::init(argc, argv);
 
     auto process_node = std::make_shared<FlightgearProcessNode>();
-    auto control_node = std::make_shared<FlightgearControlNode>(process_node->camera());
-    auto video_node = std::make_shared<FlightgearVideoNode>(process_node->camera());
+    auto control_node = std::make_shared<FlightgearControlNode>(process_node->getCamera());
+    auto video_node = std::make_shared<FlightgearVideoNode>(process_node->getCamera());
 
     process_node->run();
     control_node->run();

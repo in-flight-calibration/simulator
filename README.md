@@ -30,6 +30,28 @@ Ubuntu:
 To control the simulator use any Ground Control station: QGroundControl, Mission Planner. ApmPlanner etc.
 The latest QGroundControl AppImage is downloaded with setup script.
 
+### Camera optics
+
+The `camera.*` parameters in `config.yaml` describe a pinhole camera with plumb_bob distortion:
+
+| Parameter | Meaning |
+|---|---|
+| `width`, `height` | Published image size in pixels; `width` must be at least `height` |
+| `fov` | Undistorted *horizontal* field of view in degrees; it sets the focal length (square pixels) |
+| `cx`, `cy` | Principal point offset in pixels from the image center `((width - 1)/2, (height - 1)/2)`; positive moves right and down |
+| `distortion.k1`, `k2`, `k3` | Radial coefficients (`k1 < 0` barrel, `k1 > 0` pincushion) |
+| `distortion.p1`, `p2` | Tangential coefficients |
+
+FlightGear renders an undistorted view centered on the optical axis with the same
+focal length, enlarged as needed to cover the shifted and distorted image. The
+video node then remaps it into the published size. With zero offsets and
+distortion, the render equals the published image.
+
+Strong barrel distortion has a hard limit: with `k1` only, the image corners must
+satisfy `(2/3)/sqrt(-3 k1) >= r_corner`, where `r_corner` is the normalized corner
+radius. For 1280x720 at 75 degrees this gives `k1 >= -0.19`; a smaller `fov` or a positive
+`k2` allows more. Invalid optics stop the FlightGear node with an error.
+
 ### Record and replay
 
 While the simulator is running, record the camera image and PX4 output topics into a rosbag:

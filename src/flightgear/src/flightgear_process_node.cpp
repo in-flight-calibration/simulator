@@ -1,26 +1,27 @@
 #include "flightgear_process_node.hpp"
 
-#include <stdexcept>
-
 namespace {
 
 Camera declareCamera(rclcpp::Node & node)
 {
-    Camera camera{
+    return Camera({
         .width = static_cast<int>(node.declare_parameter("camera.width", 1280)),
         .height = static_cast<int>(node.declare_parameter("camera.height", 720)),
         .fps = static_cast<int>(node.declare_parameter("camera.fps", 30)),
-        .fov = static_cast<float>(node.declare_parameter("camera.fov", 75.0)),
-        .roll = static_cast<float>(node.declare_parameter("camera.roll", 0.0)),
-        .pitch = static_cast<float>(node.declare_parameter("camera.pitch", 0.0)),
-        .yaw = static_cast<float>(node.declare_parameter("camera.yaw", 0.0))
-    };
-
-    if (camera.width <= 0 || camera.height <= 0 || camera.fps <= 0) {
-        throw std::runtime_error("Camera width, height, and fps must be positive");
-    }
-
-    return camera;
+        .roll = node.declare_parameter("camera.roll", 0.0),
+        .pitch = node.declare_parameter("camera.pitch", 0.0),
+        .yaw = node.declare_parameter("camera.yaw", 0.0),
+        .fov = node.declare_parameter("camera.fov", 75.0),
+        .cx = node.declare_parameter("camera.cx", 0.0),
+        .cy = node.declare_parameter("camera.cy", 0.0),
+        .distortion = {
+            node.declare_parameter("camera.distortion.k1", 0.0),
+            node.declare_parameter("camera.distortion.k2", 0.0),
+            node.declare_parameter("camera.distortion.p1", 0.0),
+            node.declare_parameter("camera.distortion.p2", 0.0),
+            node.declare_parameter("camera.distortion.k3", 0.0)
+        }
+    });
 }
 
 }  // namespace
@@ -46,10 +47,10 @@ FlightgearProcessNode::~FlightgearProcessNode()
 void FlightgearProcessNode::run()
 {
     const Process::Environment env = {
-        {"FGFS_WIDTH", std::to_string(_camera.width)},
-        {"FGFS_HEIGHT", std::to_string(_camera.height)},
-        {"FGFS_FOV", std::to_string(_camera.fov)},
-        {"FGFS_FPS", std::to_string(_camera.fps)},
+        {"FGFS_WIDTH", std::to_string(_camera.getRenderSize().width)},
+        {"FGFS_HEIGHT", std::to_string(_camera.getRenderSize().height)},
+        {"FGFS_FOV", std::to_string(_camera.getRenderFov())},
+        {"FGFS_FPS", std::to_string(_camera.getFps())},
         {"FGFS_PORT_CONTROL", std::to_string(_port_control)},
         {"FGFS_PORT_VIDEO", std::to_string(_port_video)},
         {"FGFS_MULTICAST_GROUP", _multicast_group},

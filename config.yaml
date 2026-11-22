@@ -5,6 +5,14 @@
       height: 720
       fps: 30
       fov: 75.0
+      cx: 0.0
+      cy: 0.0
+      distortion:
+        k1: -0.15
+        k2: 0.0
+        k3: 0.0
+        p1: 0.0
+        p2: 0.0
       roll: 0.0
       pitch: 0.0
       yaw: 0.0

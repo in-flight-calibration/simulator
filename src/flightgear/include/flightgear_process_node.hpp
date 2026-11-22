@@ -15,7 +15,7 @@ public:
 
     void run();
 
-    const Camera& camera() const { return _camera; }
+    const Camera& getCamera() const { return _camera; }
 
 private:
     Camera _camera;
